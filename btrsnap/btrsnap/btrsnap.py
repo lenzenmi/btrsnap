@@ -1,17 +1,3 @@
 '''
-Created on Nov 13, 2013
-
-@author: mike
+This module will one day make for easy backup from btrfs to btrfs external drive
 '''
-
-class MyClass(object):
-    '''
-    classdocs
-    '''
-
-
-    def __init__(self, params):
-        '''
-        Constructor
-        '''
-        
