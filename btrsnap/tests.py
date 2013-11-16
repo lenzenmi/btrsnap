@@ -47,6 +47,14 @@ class Test_Path_Class(unittest.TestCase):
     def test_path_userexpansion(self):
         path = btrsnap.Path('~')
         self.assertEqual(path.path, os.path.expanduser('~'))
+        
+    def test_path_relative_path(self):
+        test_dir = self.test_dir
+        rel_path = 'empty_path'
+        os.mkdir(os.path.join(self.test_dir, 'empty_path'))
+        os.chdir(test_dir)
+        path = btrsnap.Path(rel_path)
+        self.assertEqual(os.path.abspath(os.path.join(test_dir, rel_path)), path.path)
 
 
 if __name__ == "__main__":
