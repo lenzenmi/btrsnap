@@ -12,23 +12,22 @@ import btrsnap
 
 class Test_Path_Class(unittest.TestCase):
 
-    test_dir = ''
+    try:
+        environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
+        test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
+    except Exception:
+        print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
+              + 'Where path = a path on a btrfs filesystem')
+        exit(1)
+    if os.path.isdir(test_dir):
+        print('{} exists. Please remove it and re-run tests'.format(test_dir))
+        exit(1)
 
     def setUp(self):
-        try:
-            environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
-            self.test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
-            
-        except Exception:
-            print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
-                  + 'Where path = a path on a btrfs filesystem')
-        
+               
         test_dir = self.test_dir
-        if os.path.isdir(test_dir):
-            print('{} exists. Please remove it and re-run tests'.format(test_dir))
-            exit(1)
+       
         os.mkdir(test_dir)
-        print(test_dir)
                 
     def tearDown(self):
         test_dir = self.test_dir
@@ -56,6 +55,82 @@ class Test_Path_Class(unittest.TestCase):
         path = btrsnap.Path(rel_path)
         self.assertEqual(os.path.abspath(os.path.join(test_dir, rel_path)), path.path)
 
+
+class Test_SnapPath_Class(unittest.TestCase):
+
+    try:
+        environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
+        test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
+    except Exception:
+        print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
+              + 'Where path = a path on a btrfs filesystem')
+        exit(1)
+    if os.path.isdir(test_dir):
+        print('{} exists. Please remove it and re-run tests'.format(test_dir))
+        exit(1)
+        
+    snap_dir = os.path.join(test_dir, 'snap_dir')
+    link_dir = os.path.join(test_dir, 'link_dir')
+    timestamps = ['2012-01-01-0001', '2012-01-01-0002', '2012-02-01-0001', '2012-02-01-0002']
+
+
+    def setUp(self):
+        test_dir = self.test_dir
+        snap_dir = self.snap_dir
+        link_dir = self.link_dir
+                
+        
+        
+        os.mkdir(test_dir)
+        os.mkdir(snap_dir)
+        os.mkdir(link_dir)
+        os.symlink(link_dir, os.path.join(snap_dir, 'target'))
+        
+        timestamps = self.timestamps
+        for folder in timestamps:
+            os.mkdir(os.path.join(snap_dir, folder))
+                
+    def tearDown(self):
+        test_dir = self.test_dir
+        shutil.rmtree(test_dir)
+        
+    def test_SnapPath_list_normal(self):
+        snap_dir = self.snap_dir
+        snap = btrsnap.SnapPath(snap_dir)
+        self.assertEqual(sorted(self.timestamps), snap.list())
+    
+    def test_SnapPath_list_ignore_files(self):
+        snap_dir = self.snap_dir
+        file_with_timestamp_name = os.path.join(snap_dir, '2013-01-01-0001')
+        open(file_with_timestamp_name, 'w').close
+        
+        snap = btrsnap.SnapPath(snap_dir)
+        self.assertEqual(sorted(self.timestamps), snap.list())
+    
+    def test_SnapPath_list_ignore_folders_without_timestamp(self):
+        snap_dir = self.snap_dir
+        os.mkdir(os.path.join(snap_dir, 'some-unrelated-dir'))
+      
+        snap = btrsnap.SnapPath(snap_dir)
+        self.assertEqual(sorted(self.timestamps), snap.list())   
+        
+    def test_SnapPath_ensure_symlink_exists(self):
+        snap_dir = self.snap_dir
+        os.unlink(os.path.join(snap_dir, 'target'))
+        self.assertRaises('TargetError')
+        
+    def test_SnapPath_ensure_only_one_symlink(self):
+        snap_dir = self.snap_dir
+        link_dir = self.link_dir
+        os.symlink(link_dir, os.path.join(snap_dir, 'target2'))
+        self.assertRaises('TargetError')
+        
+    def test_SnapPath_target(self):
+        snap_dir = self.snap_dir
+        link_dir = self.link_dir
+        snap = btrsnap.SnapPath(snap_dir)
+        self.assertEqual(snap.target, link_dir)
+           
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
