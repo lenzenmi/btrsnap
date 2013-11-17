@@ -11,9 +11,7 @@ import subprocess
 
 import btrsnap
 
-
-class Test_Path_Class(unittest.TestCase):
-
+def get_test_dir():
     try:
         environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
         test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
@@ -24,6 +22,12 @@ class Test_Path_Class(unittest.TestCase):
     if os.path.isdir(test_dir):
         print('{} exists. Please remove it and re-run tests'.format(test_dir))
         exit(1)
+    return test_dir
+
+
+class Test_Path_Class(unittest.TestCase):
+
+    test_dir = get_test_dir()
 
     def setUp(self):
                
@@ -59,17 +63,7 @@ class Test_Path_Class(unittest.TestCase):
 
 class Test_SnapPath_Class(unittest.TestCase):
 
-    try:
-        environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
-        test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
-    except Exception:
-        print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
-              + 'Where path = a path on a btrfs filesystem')
-        exit(1)
-    if os.path.isdir(test_dir):
-        print('{} exists. Please remove it and re-run tests'.format(test_dir))
-        exit(1)
-        
+    test_dir = get_test_dir()
     snap_dir = os.path.join(test_dir, 'snap_dir')
     link_dir = os.path.join(test_dir, 'link_dir')
     timestamps = ['2012-01-01-0001', '2012-01-01-0002', '2012-02-01-0001', '2012-02-01-0002']
@@ -79,15 +73,12 @@ class Test_SnapPath_Class(unittest.TestCase):
         test_dir = self.test_dir
         snap_dir = self.snap_dir
         link_dir = self.link_dir
-                
-        
-        
+        timestamps = self.timestamps
+
         os.mkdir(test_dir)
         os.mkdir(snap_dir)
         os.mkdir(link_dir)
         os.symlink(link_dir, os.path.join(snap_dir, 'target'))
-        
-        timestamps = self.timestamps
         for folder in timestamps:
             os.mkdir(os.path.join(snap_dir, folder))
                 
@@ -149,20 +140,47 @@ class Test_SnapPath_Class(unittest.TestCase):
         os.mkdir(os.path.join(snap_dir, first))
         self.assertEqual(second, snap.timestamp())
         
-
-class Test_Btrfs_Class(unittest.TestCase):
-
-    try:
-        environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
-        test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
-    except Exception:
-        print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
-              + 'Where path = a path on a btrfs filesystem')
-        exit(1)
-    if os.path.isdir(test_dir):
-        print('{} exists. Please remove it and re-run tests'.format(test_dir))
-        exit(1)
+class Test_SnapDeep_Class(unittest.TestCase):
+    test_dir = get_test_dir()
+    link_dir = os.path.join(test_dir, 'link_dir')
+    snap_dirs = []
+    for number in range(5):
+        name = 'snap_dir{}'.format(number)
+        snap_dir = os.path.join(test_dir, name)
+        snap_dirs.append(snap_dir)
         
+
+    def setUp(self):
+        test_dir = self.test_dir
+        link_dir = self.link_dir
+        snap_dirs = self.snap_dirs
+                
+        os.mkdir(test_dir)
+        subprocess.call(['btrfs', 'subvolume', 'create', link_dir ])
+        for snap_dir in snap_dirs:
+            os.mkdir(snap_dir)
+            os.symlink(link_dir, os.path.join(snap_dir, 'target'))
+
+
+    def tearDown(self):
+        test_dir = self.test_dir
+        link_dir = self.link_dir
+        subprocess.call(['btrfs', 'subvolume', 'delete', link_dir ])
+        shutil.rmtree(test_dir)  
+        
+    def test_Snapdeep_snap_paths(self):
+        test_dir = self.test_dir
+        snap_dirs = self.snap_dirs
+        snap_deep = btrsnap.SnapDeep(test_dir)
+        snap_paths = snap_deep.snap_paths()
+        snap_paths = [snap_path.path for snap_path in snap_paths]
+        
+        self.assertEqual(len(snap_dirs), len(snap_paths))
+        for snap_path in snap_paths:
+            self.assertIn(snap_path, snap_dirs)
+        
+class Test_Btrfs_Class(unittest.TestCase):
+    test_dir = get_test_dir()
     snap_dir = os.path.join(test_dir, 'snap_dir')
     link_dir = os.path.join(test_dir, 'link_dir')
     receive_dir = os.path.join(test_dir, 'receive_dir')
@@ -188,7 +206,6 @@ class Test_Btrfs_Class(unittest.TestCase):
         shutil.rmtree(test_dir)   
         
     def test_Btrfs_snap(self):
-        test_dir = self.test_dir
         snap_dir = self.snap_dir
         link_dir = self.link_dir
         snap_name = 'test'
@@ -225,18 +242,7 @@ class Test_Btrfs_Class(unittest.TestCase):
         
 
 class Test_functions_(unittest.TestCase):
-
-    try:
-        environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
-        test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
-    except Exception:
-        print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
-              + 'Where path = a path on a btrfs filesystem')
-        exit(1)
-    if os.path.isdir(test_dir):
-        print('{} exists. Please remove it and re-run tests'.format(test_dir))
-        exit(1)
-        
+    test_dir = get_test_dir()
     snap_dir = os.path.join(test_dir, 'snap_dir')
     link_dir = os.path.join(test_dir, 'link_dir')
     receive_dir = os.path.join(test_dir, 'receive_dir')

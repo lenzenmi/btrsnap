@@ -24,6 +24,22 @@ class Path:
         else:
             raise PathError('Path not valid')
         
+class SnapDeep(Path):
+        
+    def snap_paths(self):
+        snap_paths = []
+        contents = os.listdir(self.path)
+        contents = [ os.path.join(self.path, d) for d in contents if os.path.isdir(os.path.join(self.path, d))]
+        for content in contents:
+            try:
+                snap_paths.append(SnapPath(content))
+            except Exception:
+                pass
+            
+        return snap_paths
+                
+    
+        
 class SnapPath(Path):
     
     def __init__(self, path):
