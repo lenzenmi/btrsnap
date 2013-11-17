@@ -139,6 +139,7 @@ class Test_SnapPath_Class(unittest.TestCase):
         
         os.mkdir(os.path.join(snap_dir, first))
         self.assertEqual(second, snap.timestamp())
+    
         
 class Test_SnapDeep_Class(unittest.TestCase):
     test_dir = get_test_dir()
@@ -185,8 +186,7 @@ class Test_Btrfs_Class(unittest.TestCase):
     link_dir = os.path.join(test_dir, 'link_dir')
     receive_dir = os.path.join(test_dir, 'receive_dir')
 
-    @classmethod
-    def setUpClass(self):
+    def setUp(self):
         test_dir = self.test_dir
         snap_dir = self.snap_dir
         link_dir = self.link_dir
@@ -197,9 +197,8 @@ class Test_Btrfs_Class(unittest.TestCase):
         os.mkdir(receive_dir)
         subprocess.call(['btrfs', 'subvolume', 'create', link_dir ])
         os.symlink(link_dir, os.path.join(snap_dir, 'target'))
-
-    @classmethod        
-    def tearDownClass(self):
+           
+    def tearDown(self):
         test_dir = self.test_dir
         link_dir = self.link_dir
         subprocess.call(['btrfs', 'subvolume', 'delete', link_dir ])
@@ -211,9 +210,13 @@ class Test_Btrfs_Class(unittest.TestCase):
         snap_name = 'test'
         
         btrfs = btrsnap.Btrfs(snap_dir)
-        btrfs.snap(link_dir, snap_name)
+        btrfs.snap(link_dir, snap_name, readonly=False)
         
         self.assertTrue(os.path.isdir(os.path.join(snap_dir, snap_name)))
+        
+        #cleanup
+        subprocess.call(['btrfs', 'subvolume', 'delete', os.path.join(snap_dir, snap_name)])
+
         
     def test_Btrfs_snap_Exception(self):
         test_dir = self.test_dir
@@ -227,6 +230,7 @@ class Test_Btrfs_Class(unittest.TestCase):
     def test_Btrfs_unsnap(self):
         snap_dir = self.snap_dir
         snap_name = 'test'
+        subprocess.call(['btrfs', 'subvolume', 'create', os.path.join(snap_dir, snap_name)])
         
         btrfs = btrsnap.Btrfs(snap_dir)
         btrfs.unsnap(snap_name)
@@ -247,8 +251,7 @@ class Test_functions_(unittest.TestCase):
     link_dir = os.path.join(test_dir, 'link_dir')
     receive_dir = os.path.join(test_dir, 'receive_dir')
 
-    @classmethod
-    def setUpClass(self):
+    def setUp(self):
         test_dir = self.test_dir
         snap_dir = self.snap_dir
         link_dir = self.link_dir
@@ -260,8 +263,7 @@ class Test_functions_(unittest.TestCase):
         subprocess.call(['btrfs', 'subvolume', 'create', link_dir ])
         os.symlink(link_dir, os.path.join(snap_dir, 'target'))
 
-    @classmethod        
-    def tearDownClass(self):
+    def tearDown(self):
         test_dir = self.test_dir
         link_dir = self.link_dir
         subprocess.call(['btrfs', 'subvolume', 'delete', link_dir ])
@@ -274,18 +276,26 @@ class Test_functions_(unittest.TestCase):
         first = os.path.join(snap_dir, timestamp + '-0001')
         second = os.path.join(snap_dir, timestamp + '-0002')
         
-        btrsnap.snap(snap_dir)        
+        btrsnap.snap(snap_dir, readonly=False)        
         self.assertTrue(os.path.isdir(first))
-        btrsnap.snap(snap_dir)
+        btrsnap.snap(snap_dir, readonly=False)
         self.assertTrue(os.path.isdir(second))
+        
+        #cleanup
+        subprocess.call(['btrfs', 'subvolume', 'delete', first])
+        subprocess.call(['btrfs', 'subvolume', 'delete', second])
+
         
     def test_unsnap(self):
         snap_dir = self.snap_dir
+        link_dir = self.link_dir
         today = datetime.date.today()
         timestamp = today.isoformat()
         first = os.path.join(snap_dir, timestamp + '-0001')
         second = os.path.join(snap_dir, timestamp + '-0002')
-        
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, first])
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, second])
+
         btrsnap.unsnap(snap_dir, keep=1)
         self.assertFalse(os.path.isdir(first))
         self.assertTrue(os.path.isdir(second))
@@ -298,6 +308,19 @@ class Test_functions_(unittest.TestCase):
         snap_dir = self.snap_dir
         self.assertRaises(Exception, btrsnap.unsnap, snap_dir, keep=-1)
         self.assertRaises(Exception, btrsnap.unsnap, snap_dir, keep=1.5)
+        
+    def test_snapdeep(self):
+        test_dir = self.test_dir
+        snap_dir = self.snap_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        first = os.path.join(snap_dir, timestamp + '-0001')
+        
+        btrsnap.snapdeep(test_dir, readonly=False)
+        self.assertTrue(os.path.isdir(first))
+        
+        #cleanup
+        subprocess.call(['btrfs', 'subvolume', 'delete', first])
         
 
 if __name__ == "__main__":

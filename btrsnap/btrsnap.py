@@ -77,11 +77,16 @@ class SnapPath(Path):
         assert counter <= 9999
         return timestamp 
     
+    
 class Btrfs(Path):
     
-    def snap(self, target, timestamp):
+    def snap(self, target, timestamp, readonly=True):
         snapshot = os.path.join(self.path, timestamp)
-        args = ['btrfs', 'subvolume', 'snapshot', target, snapshot]
+        if readonly:
+            args = ['btrfs', 'subvolume', 'snapshot', '-r', target, snapshot]
+        else:
+            args = ['btrfs', 'subvolume', 'snapshot', target, snapshot]
+
         return_code = subprocess.call(args)
         if return_code:
             raise BtrfsError
@@ -94,10 +99,10 @@ class Btrfs(Path):
             raise BtrfsError
         
 
-def snap(path):
+def snap(path, readonly=True):
     snappath = SnapPath(path)
     btrfs = Btrfs(snappath.path)
-    btrfs.snap(snappath.target, snappath.timestamp())
+    btrfs.snap(snappath.target, snappath.timestamp(), readonly=readonly)
     
 def unsnap(path, keep=5):
     snappath = SnapPath(path)
@@ -117,6 +122,12 @@ def unsnap(path, keep=5):
     else:
         print('There are less than {} snapshot(s) in "{}"... not deleting any'.format(keep, snappath.path))
 
+def snapdeep(path, readonly=True):
+    snapdeep = SnapDeep(path)
+    snap_paths = snapdeep.snap_paths()
+    for snap_path in snap_paths:
+        snap(snap_path.path, readonly=readonly)
+        
 
 if __name__ == "__main__":
     
