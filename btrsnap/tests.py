@@ -6,6 +6,7 @@ Created on Nov 15, 2013
 import unittest
 import os
 import shutil
+import datetime
 
 import btrsnap
 
@@ -96,41 +97,58 @@ class Test_SnapPath_Class(unittest.TestCase):
         
     def test_SnapPath_list_normal(self):
         snap_dir = self.snap_dir
+        timestamps = sorted(self.timestamps, reverse=True)
         snap = btrsnap.SnapPath(snap_dir)
-        self.assertEqual(sorted(self.timestamps), snap.list())
-    
+        self.assertEqual(timestamps, snap.snapshots())
+            
     def test_SnapPath_list_ignore_files(self):
         snap_dir = self.snap_dir
+        timestamps = sorted(self.timestamps, reverse=True)
         file_with_timestamp_name = os.path.join(snap_dir, '2013-01-01-0001')
         open(file_with_timestamp_name, 'w').close
         
         snap = btrsnap.SnapPath(snap_dir)
-        self.assertEqual(sorted(self.timestamps), snap.list())
+        self.assertEqual(timestamps, snap.snapshots())
     
     def test_SnapPath_list_ignore_folders_without_timestamp(self):
         snap_dir = self.snap_dir
+        timestamps = sorted(self.timestamps, reverse=True)
         os.mkdir(os.path.join(snap_dir, 'some-unrelated-dir'))
       
         snap = btrsnap.SnapPath(snap_dir)
-        self.assertEqual(sorted(self.timestamps), snap.list())   
+        self.assertEqual(timestamps, snap.snapshots())   
         
     def test_SnapPath_ensure_symlink_exists(self):
         snap_dir = self.snap_dir
         os.unlink(os.path.join(snap_dir, 'target'))
-        self.assertRaises('TargetError')
+        
+        self.assertRaises(btrsnap.TargetError, btrsnap.SnapPath, snap_dir)
         
     def test_SnapPath_ensure_only_one_symlink(self):
         snap_dir = self.snap_dir
         link_dir = self.link_dir
         os.symlink(link_dir, os.path.join(snap_dir, 'target2'))
-        self.assertRaises('TargetError')
+        self.assertRaises(btrsnap.TargetError, btrsnap.SnapPath, snap_dir)
         
     def test_SnapPath_target(self):
         snap_dir = self.snap_dir
         link_dir = self.link_dir
         snap = btrsnap.SnapPath(snap_dir)
         self.assertEqual(snap.target, link_dir)
-           
+        
+    def test_SnapPath_timestamp(self):
+        snap_dir = self.snap_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        first = timestamp + '-0001'
+        second = timestamp + '-0002'
+        
+        snap = btrsnap.SnapPath(snap_dir)
+        self.assertEqual(first, snap.timestamp())
+        
+        os.mkdir(os.path.join(snap_dir, first))
+        self.assertEqual(second, snap.timestamp())
+      
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
