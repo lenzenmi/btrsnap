@@ -5,10 +5,15 @@ This module will one day make for easy backup from btrfs to btrfs external drive
 import os
 import re
 import datetime
+import subprocess
 
 class PathError(Exception):
     pass
+
 class TargetError(Exception):
+    pass
+
+class BtrfsError(Exception):
     pass
 
 class Path:
@@ -35,7 +40,7 @@ class SnapPath(Path):
         contents = [ link for link in contents if os.path.islink(os.path.join(self.path, link))]
         if not len(contents) == 1:
             raise TargetError('there must be exactly 1 symlink pointing to a target btrfs subvolume'
-            + ' in snapshot directory {}'.format(self.path))
+                              + ' in snapshot directory {}'.format(self.path))
         self._target = os.path.realpath(os.path.abspath(os.path.join(self.path, contents[0])))
     
     def snapshots(self):
@@ -55,6 +60,23 @@ class SnapPath(Path):
 
         assert counter <= 9999
         return timestamp 
+    
+class Btrfs(Path):
+    
+    def snap(self, target, timestamp):
+        snapshot = os.path.join(self.path, timestamp)
+        args = ['btrfs', 'subvolume', 'snapshot', target, snapshot]
+        return_code = subprocess.call(args)
+        if return_code:
+            raise BtrfsError
+        
+    def unsnap(self, timestamp):  
+        snapshot = os.path.join(self.path, timestamp)
+        args = ['btrfs', 'subvolume', 'delete', snapshot]
+        return_code = subprocess.call(args)
+        if return_code:
+            raise BtrfsError
+        
     
 
 if __name__ == "__main__":
