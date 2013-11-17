@@ -77,7 +77,30 @@ class Btrfs(Path):
         if return_code:
             raise BtrfsError
         
+
+def snap(path):
+    snappath = SnapPath(path)
+    btrfs = Btrfs(snappath.path)
+    btrfs.snap(snappath.target, snappath.timestamp())
     
+def unsnap(path, keep=5):
+    snappath = SnapPath(path)
+    btrfs = Btrfs(snappath.path)
+    snapshots = snappath.snapshots()
+    
+    if not keep >= 0 or not isinstance(keep, int):
+        raise Exception('keep must be a positive integer')        
+    if len(snapshots) > keep:
+        snaps_to_delete = snapshots[keep:]
+        for snapshot in snaps_to_delete:
+            btrfs.unsnap(snapshot)
+        print('Deleted {} snapshot(s) from "{}". {} kept'.format(
+                len(snaps_to_delete), snappath.path, keep)
+                )
+    
+    else:
+        print('There are less than {} snapshot(s) in "{}"... not deleting any'.format(keep, snappath.path))
+
 
 if __name__ == "__main__":
     

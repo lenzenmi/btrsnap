@@ -198,8 +198,13 @@ class Test_Btrfs_Class(unittest.TestCase):
         
         self.assertTrue(os.path.isdir(os.path.join(snap_dir, snap_name)))
         
-        #check to make sure an error in btrfs-progs raises an error
+    def test_Btrfs_snap_Exception(self):
+        test_dir = self.test_dir
+        snap_dir = self.snap_dir
+        snap_name = 'test'        
         bogus_dir = os.path.join(test_dir, 'bogus_dir')
+        
+        btrfs = btrsnap.Btrfs(snap_dir)
         self.assertRaises(btrsnap.BtrfsError, btrfs.snap, bogus_dir, snap_name)
         
     def test_Btrfs_unsnap(self):
@@ -211,10 +216,83 @@ class Test_Btrfs_Class(unittest.TestCase):
         
         self.assertFalse(os.path.isdir(os.path.join(snap_dir, snap_name)))
         
-        #check to make sure an error in btrfs-progs raises an error
+    def test_Btrfs_unsnap_Exception(self):
+        snap_dir = self.snap_dir
         bogus = 'bogus_dir'
+        
+        btrfs = btrsnap.Btrfs(snap_dir)
         self.assertRaises(btrsnap.BtrfsError, btrfs.unsnap, bogus)
+        
+
+class Test_functions_(unittest.TestCase):
+
+    try:
+        environ_path = os.path.expanduser(os.environ['BTRSNAP_TEST_DIR'])
+        test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
+    except Exception:
+        print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
+              + 'Where path = a path on a btrfs filesystem')
+        exit(1)
+    if os.path.isdir(test_dir):
+        print('{} exists. Please remove it and re-run tests'.format(test_dir))
+        exit(1)
+        
+    snap_dir = os.path.join(test_dir, 'snap_dir')
+    link_dir = os.path.join(test_dir, 'link_dir')
+    receive_dir = os.path.join(test_dir, 'receive_dir')
+
+    @classmethod
+    def setUpClass(self):
+        test_dir = self.test_dir
+        snap_dir = self.snap_dir
+        link_dir = self.link_dir
+        receive_dir = self.receive_dir
+                
+        os.mkdir(test_dir)
+        os.mkdir(snap_dir)
+        os.mkdir(receive_dir)
+        subprocess.call(['btrfs', 'subvolume', 'create', link_dir ])
+        os.symlink(link_dir, os.path.join(snap_dir, 'target'))
+
+    @classmethod        
+    def tearDownClass(self):
+        test_dir = self.test_dir
+        link_dir = self.link_dir
+        subprocess.call(['btrfs', 'subvolume', 'delete', link_dir ])
+        shutil.rmtree(test_dir)
       
+    def test_snap(self):
+        snap_dir = self.snap_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        first = os.path.join(snap_dir, timestamp + '-0001')
+        second = os.path.join(snap_dir, timestamp + '-0002')
+        
+        btrsnap.snap(snap_dir)        
+        self.assertTrue(os.path.isdir(first))
+        btrsnap.snap(snap_dir)
+        self.assertTrue(os.path.isdir(second))
+        
+    def test_unsnap(self):
+        snap_dir = self.snap_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        first = os.path.join(snap_dir, timestamp + '-0001')
+        second = os.path.join(snap_dir, timestamp + '-0002')
+        
+        btrsnap.unsnap(snap_dir, keep=1)
+        self.assertFalse(os.path.isdir(first))
+        self.assertTrue(os.path.isdir(second))
+        
+        btrsnap.unsnap(snap_dir, keep=0)
+        self.assertFalse(os.path.isdir(first))
+        self.assertFalse(os.path.isdir(second))
+        
+    def test_unsnap_invalid_keep(self):
+        snap_dir = self.snap_dir
+        self.assertRaises(Exception, btrsnap.unsnap, snap_dir, keep=-1)
+        self.assertRaises(Exception, btrsnap.unsnap, snap_dir, keep=1.5)
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
