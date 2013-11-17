@@ -16,6 +16,7 @@ class TargetError(Exception):
 class BtrfsError(Exception):
     pass
 
+
 class Path:
     
     def __init__(self, path):
@@ -23,7 +24,18 @@ class Path:
             self.path = os.path.abspath(os.path.expanduser(path))
         else:
             raise PathError('Path not valid')
-        
+
+
+class SnapshotsMixin:
+    
+    def snapshots(self):
+        pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
+        contents = os.listdir(path=self.path)
+        contents = [ d for d in contents if os.path.isdir(os.path.join(self.path, d)) and re.search(pattern, d)]
+        contents.sort(reverse=True)
+        return contents
+    
+            
 class SnapDeep(Path):
         
     def snap_paths(self):
@@ -38,9 +50,8 @@ class SnapDeep(Path):
             
         return snap_paths
                 
-    
         
-class SnapPath(Path):
+class SnapPath(Path, SnapshotsMixin):
     
     def __init__(self, path):
         Path.__init__(self, path)
@@ -59,13 +70,6 @@ class SnapPath(Path):
                               + ' in snapshot directory {}'.format(self.path))
         self._target = os.path.realpath(os.path.abspath(os.path.join(self.path, contents[0])))
     
-    def snapshots(self):
-        pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
-        contents = os.listdir(path=self.path)
-        contents = [ d for d in contents if os.path.isdir(os.path.join(self.path, d)) and re.search(pattern, d)]
-        contents.sort(reverse=True)
-        return contents
-    
     def timestamp(self, counter=1):
         today = datetime.date.today()
         timestamp = None
@@ -77,7 +81,11 @@ class SnapPath(Path):
         assert counter <= 9999
         return timestamp 
     
+
+class ReceivePath(Path, SnapshotsMixin):
+    pass
     
+       
 class Btrfs(Path):
     
     def snap(self, target, timestamp, readonly=True):
@@ -127,7 +135,14 @@ def snapdeep(path, readonly=True):
     snap_paths = snapdeep.snap_paths()
     for snap_path in snap_paths:
         snap(snap_path.path, readonly=readonly)
-        
+
+def show_snaps(path):
+    receive_path = ReceivePath(path)
+    snapshots = receive_path.snapshots()
+    
+    for snapshot in snapshots:
+        print(snapshot)
+    print('\n"{}" contains {} snapshot(s)'.format(receive_path.path, len(snapshots)))
 
 if __name__ == "__main__":
     

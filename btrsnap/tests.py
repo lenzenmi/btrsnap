@@ -61,6 +61,34 @@ class Test_Path_Class(unittest.TestCase):
         self.assertEqual(os.path.abspath(os.path.join(test_dir, rel_path)), path.path)
 
 
+class Test_ReceivePath_Class(unittest.TestCase):
+
+    test_dir = get_test_dir()
+    snap_dir = os.path.join(test_dir, 'snap_dir')
+    timestamps = ['2012-01-01-0001', '2012-01-01-0002', '2012-02-01-0001', '2012-02-01-0002']
+
+
+    def setUp(self):
+        test_dir = self.test_dir
+        snap_dir = self.snap_dir
+        timestamps = self.timestamps
+
+        os.mkdir(test_dir)
+        os.mkdir(snap_dir)
+        for folder in timestamps:
+            os.mkdir(os.path.join(snap_dir, folder))
+                
+    def tearDown(self):
+        test_dir = self.test_dir
+        shutil.rmtree(test_dir)
+        
+    def test_ReceivePath_list_normal(self):
+        snap_dir = self.snap_dir
+        timestamps = sorted(self.timestamps, reverse=True)
+        snap = btrsnap.ReceivePath(snap_dir)
+        self.assertEqual(timestamps, snap.snapshots())
+            
+
 class Test_SnapPath_Class(unittest.TestCase):
 
     test_dir = get_test_dir()
@@ -179,6 +207,7 @@ class Test_SnapDeep_Class(unittest.TestCase):
         self.assertEqual(len(snap_dirs), len(snap_paths))
         for snap_path in snap_paths:
             self.assertIn(snap_path, snap_dirs)
+        
         
 class Test_Btrfs_Class(unittest.TestCase):
     test_dir = get_test_dir()
@@ -321,6 +350,22 @@ class Test_functions_(unittest.TestCase):
         
         #cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
+        
+    def test_show_snaps(self):
+        snap_dir = self.snap_dir
+        link_dir = self.link_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        first = os.path.join(snap_dir, timestamp + '-0001')
+        second = os.path.join(snap_dir, timestamp + '-0002')
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, first])
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, second])
+        
+        self.assertTrue(True, btrsnap.show_snaps(snap_dir))  
+        
+        #cleanup
+        subprocess.call(['btrfs', 'subvolume', 'delete', first])
+        subprocess.call(['btrfs', 'subvolume', 'delete', second])      
         
 
 if __name__ == "__main__":
