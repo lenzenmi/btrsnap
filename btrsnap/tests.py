@@ -1,5 +1,13 @@
 '''
 Created on Nov 15, 2013
+You must set the environment variable 'BTRSNAP_TEST_DIR' to a directory on a BTRFS subvolume
+where you want the tests to run.
+
+    example:
+    BTRSNAP_TEST_DIR='~/' python tests.py
+    
+BTRFS snapshots are created using the readonly=False flag. This is to allow the test modules to 
+delete readonly snapshots
 
 @author: mike
 '''
@@ -62,7 +70,9 @@ class Test_Path_Class(unittest.TestCase):
 
 
 class Test_ReceivePath_Class(unittest.TestCase):
-
+    '''
+    Most of this class's functionality is tested in other test classes as it is comprised of mixins.
+    '''
     test_dir = get_test_dir()
     snap_dir = os.path.join(test_dir, 'snap_dir')
     timestamps = ['2012-01-01-0001', '2012-01-01-0002', '2012-02-01-0001', '2012-02-01-0002']
@@ -114,13 +124,13 @@ class Test_SnapPath_Class(unittest.TestCase):
         test_dir = self.test_dir
         shutil.rmtree(test_dir)
         
-    def test_SnapPath_list_normal(self):
+    def test_SnapPath_snapshotsMixin_normal(self):
         snap_dir = self.snap_dir
         timestamps = sorted(self.timestamps, reverse=True)
         snap = btrsnap.SnapPath(snap_dir)
         self.assertEqual(timestamps, snap.snapshots())
             
-    def test_SnapPath_list_ignore_files(self):
+    def test_SnapPath_snapshotsMixin_ignore_files(self):
         snap_dir = self.snap_dir
         timestamps = sorted(self.timestamps, reverse=True)
         file_with_timestamp_name = os.path.join(snap_dir, '2013-01-01-0001')
