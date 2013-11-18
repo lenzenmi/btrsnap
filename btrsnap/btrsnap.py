@@ -86,10 +86,23 @@ class SnapPath(Path, SnapshotsMixin):
     
     def timestamp(self, counter=1):
         today = datetime.date.today()
+        snapshots = self.snapshots()
+        if snapshots:
+            last_snapshot = snapshots[0]
+            less_than_last_snapshot = True
+        else:
+            last_snapshot = None
+            less_than_last_snapshot = False
         timestamp = None
         
-        while (timestamp in self.snapshots()) or (timestamp == None):
+        
+        while (timestamp == None) or (timestamp in snapshots) or (less_than_last_snapshot == True):
             timestamp = '{}-{:04d}'.format(today.isoformat(), counter)
+            if less_than_last_snapshot == True:
+                if timestamp < last_snapshot:
+                    less_than_last_snapshot = True
+                else:
+                    less_than_last_snapshot = False
             counter += 1
 
         assert counter <= 9999
@@ -130,16 +143,16 @@ class Btrfs(Path):
             args.extend(['-p', parent])
                     
         args.append(os.path.join(self.path, snapshot))
-        print(args)
         p1 = subprocess.Popen(args, stdout=subprocess.PIPE)
         return p1
     
     def receive(self, p1):
         args = ['btrfs', 'receive', self.path]
-        p2 = subprocess.Popen(args, stdin=p1.stdout, stdout=subprocess.PIPE)
-        p1.stdout.close()
+        p2 = subprocess.Popen(args, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = p2.communicate()
-        print(output[0], output[1])
+        p1.stdout.close()
+        if p2.returncode:
+            raise BtrfsError('BTRFS Failed send/recieve', output[0], output[1])
         
         
 def snap(path, readonly=True):
@@ -155,7 +168,7 @@ def unsnap(path, keep=5):
     '''
     Delete all but most recent KEEP(default 5) snapshots inside PATH
     '''
-    snappath = SnapPath(path)
+    snappath = ReceivePath(path)
     btrfs = Btrfs(snappath.path)
     snapshots = snappath.snapshots()
     
@@ -166,11 +179,12 @@ def unsnap(path, keep=5):
         for snapshot in snaps_to_delete:
             try:
                 btrfs.unsnap(snapshot)
-                print('Deleted {} snapshot(s) from "{}". {} kept'.format(
-                    len(snaps_to_delete), snappath.path, keep)
-                    )
             except BtrfsError as error:
                 print('Error: {}'.format(error))
+         
+        print('Deleted {} snapshot(s) from "{}". {} kept'.format(
+                len(snaps_to_delete), snappath.path, keep)
+              )
     
     else:
         print('There are less than {} snapshot(s) in "{}"... not deleting any'.format(keep, snappath.path))
@@ -213,27 +227,30 @@ def sendreceive(send_path, receive_path):
     union.sort()
     
     if diff:
-        if union:
-            parent, snapshot = union.pop(), diff.pop(0)
+        if union and union[-1] < diff[0]:
+            parent, snapshot = union[-1:], diff[0]
+            print(snapshot, parent)
             p1 = send_btr.send(snapshot, parent)
             receive_btr.receive(p1)
         else:
-            parent, snapshot = None, diff.pop(0)
+            parent, snapshot = None, diff[0]
+            print(snapshot, parent)
             p1 = send_btr.send(snapshot, parent)
             receive_btr.receive(p1)
                     
         while diff:
-            if len(diff) > 1:
-                parent, snapshot = diff.pop(0), diff.pop(0)
-            else: 
-                parent, snapshot = None, diff.pop(0)
+            if len(diff) >= 2:
+                parent, snapshot = diff.pop(0), diff[0]
+                print(snapshot, parent)
+                p1 = send_btr.send(snapshot, parent)
+                receive_btr.receive(p1)
+            else:
+                diff.pop(0)
             
-            p1 = send_btr.send(snapshot, parent)
-            receive_btr.receive(p1)
             
         
     else:
-        print('No new snapshots to copy from {} to {}').format(send.path, receive.path)
+        print('No new snapshots to copy from \'{}\' to \'{}\''.format(send.path, receive.path))
         
 if __name__ == "__main__":
     
@@ -301,10 +318,10 @@ if __name__ == "__main__":
             show_snaps(args.list[0])
                 
         if args.send_receive:
-            #try:
+            try:
                 sendreceive(args.send_receive[0], args.send_receive[1])
-            #except Exception as err:
-            #    print('Error:', err)
+            except Exception as err:
+                print('Error:', err)
             
            
     #start the program
