@@ -99,7 +99,7 @@ class SnapPath(Path, SnapshotsMixin):
         while (timestamp == None) or (timestamp in snapshots) or (less_than_last_snapshot == True):
             timestamp = '{}-{:04d}'.format(today.isoformat(), counter)
             if less_than_last_snapshot == True:
-                if timestamp < last_snapshot:
+                if timestamp <= last_snapshot:
                     less_than_last_snapshot = True
                 else:
                     less_than_last_snapshot = False
@@ -177,11 +177,8 @@ def unsnap(path, keep=5):
     if len(snapshots) > keep:
         snaps_to_delete = snapshots[keep:]
         for snapshot in snaps_to_delete:
-            try:
-                btrfs.unsnap(snapshot)
-            except BtrfsError as error:
-                print('Error: {}'.format(error))
-         
+            btrfs.unsnap(snapshot)
+                    
         print('Deleted {} snapshot(s) from "{}". {} kept'.format(
                 len(snaps_to_delete), snappath.path, keep)
               )

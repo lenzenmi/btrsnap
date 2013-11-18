@@ -177,7 +177,18 @@ class Test_SnapPath_Class(unittest.TestCase):
         
         os.mkdir(os.path.join(snap_dir, first))
         self.assertEqual(second, snap.timestamp())
-    
+        
+    def test_SnapPath_timestamp_always_older(self):
+        snap_dir = self.snap_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        second = timestamp + '-0002'
+        third = timestamp + '-0003'
+        
+        snap = btrsnap.SnapPath(snap_dir)
+        os.mkdir(os.path.join(snap_dir, second))
+        self.assertEqual(third, snap.timestamp())
+
         
 class Test_SnapDeep_Class(unittest.TestCase):
     test_dir = get_test_dir()
