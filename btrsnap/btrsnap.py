@@ -123,7 +123,25 @@ class Btrfs(Path):
         if return_code:
             raise BtrfsError('BTRFS failed to delete the subvolume. Perhaps you need root permissions')
         
-
+    def send(self, snapshot, parent=None):
+        args = ['btrfs', 'send']
+        if parent:
+            parent = os.path.join(self.path, parent)
+            args.extend(['-p', parent])
+                    
+        args.append(os.path.join(self.path, snapshot))
+        print(args)
+        p1 = subprocess.Popen(args, stdout=subprocess.PIPE)
+        return p1
+    
+    def receive(self, p1):
+        args = ['btrfs', 'receive', self.path]
+        p2 = subprocess.Popen(args, stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output = p2.communicate()
+        print(output[0], output[1])
+        
+        
 def snap(path, readonly=True):
     '''
     Creates a snapshot inside PATH with format YYYY-MM-DD-#### 
@@ -178,7 +196,45 @@ def show_snaps(path):
     for snapshot in snapshots:
         print(snapshot)
     print('\n"{}" contains {} snapshot(s)'.format(receive_path.path, len(snapshots)))
-
+    
+def sendreceive(send_path, receive_path):
+    send = SnapPath(send_path)
+    receive = ReceivePath(receive_path)
+    send_btr = Btrfs(send.path)
+    receive_btr = Btrfs(receive.path)
+    
+    send_set = set(send.snapshots())
+    receive_set = set(receive.snapshots())
+    diff = send_set - receive_set
+    diff = list(diff)
+    diff.sort()
+    union = send_set & receive_set
+    union = list(union)
+    union.sort()
+    
+    if diff:
+        if union:
+            parent, snapshot = union.pop(), diff.pop(0)
+            p1 = send_btr.send(snapshot, parent)
+            receive_btr.receive(p1)
+        else:
+            parent, snapshot = None, diff.pop(0)
+            p1 = send_btr.send(snapshot, parent)
+            receive_btr.receive(p1)
+                    
+        while diff:
+            if len(diff) > 1:
+                parent, snapshot = diff.pop(0), diff.pop(0)
+            else: 
+                parent, snapshot = None, diff.pop(0)
+            
+            p1 = send_btr.send(snapshot, parent)
+            receive_btr.receive(p1)
+            
+        
+    else:
+        print('No new snapshots to copy from {} to {}').format(send.path, receive.path)
+        
 if __name__ == "__main__":
     
     def main():
@@ -191,24 +247,23 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(prog='btrsnap',
                                         formatter_class=argparse.RawDescriptionHelpFormatter,
                                         description='''
-        Writen for python 3.x
-        This module can be run directly from the commandline. 
-        You will need root privileges for actions involving the removal of snapshots.
+    btrsnap is a BTRFS wrapper to simplify dealing with snapshots.
+    You will need root privileges for actions involving the removal of snapshots.
 
-        btrsnap is a BTRFS wrapper to simplify dealing with snapshots.
 
-        To use, create a root directory on a BTRFS filesystem where you will keep your snapshots.
-        within this directory create any number of subdirectories. Each subdirectory must contain a 
-        symbolic link pointing to a valid BTRFS subvolume.\n\n
+    To use, create a root directory on a BTRFS filesystem where you will keep your snapshots.
+    within this directory create any number of subdirectories. Each subdirectory must contain a 
+    symbolic link pointing to a valid BTRFS subvolume.\n\n
 
-        For example:
+    For example:
+    
             /snapshots
                 -/music
                     target (symbolic link pointing to => /srv/music)
                 -/photos
                     target (symbolic link pointing to => /srv/photos)
         
-        Note:
+    Note:
             You can create a symbolic link using:
             ln -s /srv/music /snapshots/music/target
         ...         ''')
@@ -217,39 +272,40 @@ if __name__ == "__main__":
         parser.add_argument('-l', '--list', nargs=1, metavar='PATH', help='List snapshots in PATH')
         parser.add_argument('-d', '--delete', nargs=1, metavar='PATH', help='Delete all but 5 snapshots in PATH. May be modified by -k, --keep')
         parser.add_argument('-k', '--keep', nargs=1, type=int, metavar='NUMBER', help='Number of snapshots to keep with -d, --delete ')
-        parser.add_argument('--version', action='version', version='%(prog) 0/0.0')
+        parser.add_argument('--send-receive', dest='send_receive', nargs=2, metavar='PATH', help='Send snapshots from PATH to PATH using btrfs send and receive')
+        parser.add_argument('--version', action='version', version='btrsnap 0.0.0')
         args = parser.parse_args()
         
         if args.snap:
-            folders = args.snap
-            for path in folders:
-                try:
-                    snap(path)
-                except Exception as err:
-                    print('Error:', err)
+            try:
+                snap(args.snap[0])
+            except Exception as err:
+                print('Error:', err)
         
         if args.snapdeep:
-            folders = args.snapdeep
-            if len(folders) > 1:
-                print('Only give 1 --snapdeep argument. Skipping snapdeep operation')
-            else:
-                snapdeep(folders[0])
+            try:
+                snapdeep(args.snapdeep[0])
+            except Exception as err:
+                print('Error:', err)
                 
         if args.delete:
             keep = 5
             if args.keep:
                 keep = args.keep[0]
-            paths = args.delete
-            for path in paths:
-                unsnap(path, keep=keep)
+            try:
+                unsnap(args.delete[0], keep=keep)
+            except Exception as err:
+                print('Error:', err)
                 
-                    
-                    
         if args.list:
-            folders = args.list
-            for path in folders:
-                show_snaps(path)
+            show_snaps(args.list[0])
                 
+        if args.send_receive:
+            #try:
+                sendreceive(args.send_receive[0], args.send_receive[1])
+            #except Exception as err:
+            #    print('Error:', err)
+            
            
     #start the program
     main()
