@@ -1,3 +1,4 @@
+#!/usr/bin/python
 '''
 Created on Nov 15, 2013
 You must set the environment variable 'BTRSNAP_TEST_DIR' to a directory on a BTRFS subvolume
