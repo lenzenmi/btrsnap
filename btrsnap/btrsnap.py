@@ -225,9 +225,11 @@ def sendreceive(send_path, receive_path):
     union = list(union)
     union.sort()
     
+    number_sent = len(diff)
+    
     if diff:
         if union and union[-1] < diff[0]:
-            parent, snapshot = union[-1:], diff[0]
+            parent, snapshot = union[-1], diff[0]
             p1 = send_btr.send(snapshot, parent)
             receive_btr.receive(p1)
         else:
@@ -242,12 +244,33 @@ def sendreceive(send_path, receive_path):
                 receive_btr.receive(p1)
             else:
                 diff.pop(0)
-        msg = '{} snapshots copied from \'{}\' to \'{}\''.format(len(diff), send.path, receive.path)
+        msg = '{} snapshots copied from \'{}\' to \'{}\''.format(number_sent, send.path, receive.path)
             
         
     else:
         msg = 'No new snapshots to copy from \'{}\' to \'{}\''.format(send.path, receive.path)
     return msg
+
+def sendreceive_deep(send_path, receive_path):
+    snappaths = SnapDeep(send_path)
+    snappaths = snappaths.snap_paths()
+    snappaths = [snappath.path for snappath in snappaths]
+    receive_path = Path(receive_path)
+    receive_path = receive_path.path
+    receive_paths = [os.path.join(receive_path, s.split(os.path.sep)[-1]) for s in snappaths]
+    msg = []
+    
+    for p in receive_paths:
+        if not os.path.isdir(p):
+            os.mkdir(p)
+    
+    args = zip(snappaths, receive_paths)
+    
+    for send_path, receive_path in args:
+        msg.append(sendreceive(send_path, receive_path))
+        
+    return '\n'.join(msg)
+    
         
 if __name__ == "__main__":
     
@@ -287,12 +310,15 @@ if __name__ == "__main__":
         parser.add_argument('-d', '--delete', nargs=1, metavar='PATH', help='Delete all but 5 snapshots in PATH. May be modified by -k, --keep')
         parser.add_argument('-k', '--keep', nargs=1, type=int, metavar='NUMBER', help='Number of snapshots to keep with -d, --delete ')
         parser.add_argument('--send-receive', dest='send_receive', nargs=2, metavar='PATH', help='Send snapshots from PATH to PATH using btrfs send and receive')
+        parser.add_argument('--send-receive-deep', dest='send_receive_deep', nargs=2, metavar='PATH', help='Send snapshots from each subdirectory in PATH to a subdirectory inside PATH using btrfs send and receive')
         parser.add_argument('--version', action='version', version='btrsnap 0.0.0')
         args = parser.parse_args()
         
         def caller(func, *args, **kargs):
             try:
-                print(func(*args, **kargs)) 
+                msg = func(*args, **kargs) 
+                if msg: 
+                    print(msg)
             except Exception as err:
                 print('Error:', err)
             
@@ -314,6 +340,9 @@ if __name__ == "__main__":
                                    
         if args.send_receive:
             caller(sendreceive, args.send_receive[0], args.send_receive[1])
+        
+        if args.send_receive_deep:
+            caller(sendreceive_deep, args.send_receive_deep[0], args.send_receive_deep[1])
                                           
            
     #start the program
