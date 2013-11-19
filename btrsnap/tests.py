@@ -360,6 +360,27 @@ class Test_functions_(unittest.TestCase):
         self.assertRaises(Exception, btrsnap.unsnap, snap_dir, keep=-1)
         self.assertRaises(Exception, btrsnap.unsnap, snap_dir, keep=1.5)
         
+    def test_unsnap_keep_too_high(self):
+        snap_dir = self.snap_dir
+        link_dir = self.link_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        first = os.path.join(snap_dir, timestamp + '-0001')
+        second = os.path.join(snap_dir, timestamp + '-0002')
+        
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, first])
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, second])
+        
+        btrsnap.unsnap(snap_dir, keep=10)
+        self.assertTrue(os.path.isdir(first))
+        self.assertTrue(os.path.isdir(second))
+        
+        #cleanup
+        btrsnap.unsnap(snap_dir, keep=0)
+
+        
+        
+        
     def test_snapdeep(self):
         test_dir = self.test_dir
         snap_dir = self.snap_dir
@@ -372,6 +393,18 @@ class Test_functions_(unittest.TestCase):
         
         #cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
+        
+    def test_snapdeep_no_snappaths(self):
+        test_dir = self.test_dir
+        snap_dir = self.snap_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        first = os.path.join(snap_dir, timestamp + '-0001')
+        
+        os.unlink(os.path.join(snap_dir, 'target'))
+        
+        btrsnap.snapdeep(test_dir, readonly=False)
+        self.assertFalse(os.path.isdir(first))
         
     def test_show_snaps(self):
         snap_dir = self.snap_dir
