@@ -107,7 +107,6 @@ class Test_SnapPath_Class(unittest.TestCase):
     link_dir = os.path.join(test_dir, 'link_dir')
     timestamps = ['2012-01-01-0001', '2012-01-01-0002', '2012-02-01-0001', '2012-02-01-0002']
 
-
     def setUp(self):
         test_dir = self.test_dir
         snap_dir = self.snap_dir
@@ -199,7 +198,6 @@ class Test_SnapDeep_Class(unittest.TestCase):
         name = 'snap_dir{}'.format(number)
         snap_dir = os.path.join(test_dir, name)
         snap_dirs.append(snap_dir)
-        
 
     def setUp(self):
         test_dir = self.test_dir
@@ -229,7 +227,6 @@ class Test_SnapDeep_Class(unittest.TestCase):
         self.assertEqual(len(snap_dirs), len(snap_paths))
         for snap_path in snap_paths:
             self.assertIn(snap_path, snap_dirs)
-        
         
 class Test_Btrfs_Class(unittest.TestCase):
     test_dir = get_test_dir()
@@ -267,7 +264,6 @@ class Test_Btrfs_Class(unittest.TestCase):
         
         #cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', os.path.join(snap_dir, snap_name)])
-
         
     def test_Btrfs_snap_Exception(self):
         test_dir = self.test_dir
@@ -335,7 +331,6 @@ class Test_functions_(unittest.TestCase):
         #cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
         subprocess.call(['btrfs', 'subvolume', 'delete', second])
-
         
     def test_unsnap(self):
         snap_dir = self.snap_dir
@@ -377,9 +372,6 @@ class Test_functions_(unittest.TestCase):
         
         #cleanup
         btrsnap.unsnap(snap_dir, keep=0)
-
-        
-        
         
     def test_snapdeep(self):
         test_dir = self.test_dir
