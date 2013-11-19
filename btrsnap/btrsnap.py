@@ -95,7 +95,6 @@ class SnapPath(Path, SnapshotsMixin):
             less_than_last_snapshot = False
         timestamp = None
         
-        
         while (timestamp == None) or (timestamp in snapshots) or (less_than_last_snapshot == True):
             timestamp = '{}-{:04d}'.format(today.isoformat(), counter)
             if less_than_last_snapshot == True:
@@ -103,9 +102,10 @@ class SnapPath(Path, SnapshotsMixin):
                     less_than_last_snapshot = True
                 else:
                     less_than_last_snapshot = False
+               
+            if counter > 9999:
+                raise Exception('More than 9999 snapshots created today. Something is probably wrong. Aborting!')
             counter += 1
-
-        assert counter <= 9999
         return timestamp 
     
 
@@ -152,7 +152,7 @@ class Btrfs(Path):
         output = p2.communicate()
         p1.stdout.close()
         if p2.returncode:
-            raise BtrfsError('BTRFS Failed send/recieve', output[0], output[1])
+            raise BtrfsError('BTRFS Failed send/recieve. Do you have root permissions?', output[0], output[1])
         
         
 def snap(path, readonly=True):
@@ -178,13 +178,11 @@ def unsnap(path, keep=5):
         snaps_to_delete = snapshots[keep:]
         for snapshot in snaps_to_delete:
             btrfs.unsnap(snapshot)
-              
         msg = 'Deleted {} snapshot(s) from "{}". {} kept'.format(
                 len(snaps_to_delete), snappath.path, keep)
-                  
     else:
         msg = 'There are less than {} snapshot(s) in "{}"... not deleting any'.format(keep, snappath.path)
-        return msg
+    return msg
 
 def snapdeep(path, readonly=True):
     '''
@@ -211,6 +209,9 @@ def show_snaps(path):
     return '\n'.join(msg)
     
 def sendreceive(send_path, receive_path):
+    '''
+    Send snapshots from one BTRFS PATH to another. 
+    '''
     send = SnapPath(send_path)
     receive = ReceivePath(receive_path)
     send_btr = Btrfs(send.path)
@@ -236,7 +237,6 @@ def sendreceive(send_path, receive_path):
             parent, snapshot = None, diff[0]
             p1 = send_btr.send(snapshot, parent)
             receive_btr.receive(p1)
-                    
         while diff:
             if len(diff) >= 2:
                 parent, snapshot = diff.pop(0), diff[0]
@@ -245,8 +245,6 @@ def sendreceive(send_path, receive_path):
             else:
                 diff.pop(0)
         msg = '{} snapshots copied from \'{}\' to \'{}\''.format(number_sent, send.path, receive.path)
-            
-        
     else:
         msg = 'No new snapshots to copy from \'{}\' to \'{}\''.format(send.path, receive.path)
     return msg
@@ -281,16 +279,57 @@ if __name__ == "__main__":
         
         import argparse
 
+       
+        
+        def caller(func, *args, **kargs):
+            try:
+                msg = func(*args, **kargs) 
+                if msg: 
+                    print(msg)
+            except Exception as err:
+                print('Error:', err)
+            
+        def run_snap(args):
+            if not args.recursive:
+                caller(snap, args.snap_path[0])
+                if args.delete:
+                    keep = 5
+                    if args.keep:
+                        keep = args.keep[0]
+                    caller(unsnap, args.snap_path[0], keep=keep)
+                
+            if args.recursive:
+                caller(snapdeep, args.snap_path[0])
+                    
+        def run_list(args):
+            caller(show_snaps, args.snap_path[0])
+            
+        def run_send(args):
+            if not args.recursive:
+                caller(sendreceive, args.send_path[0], args.receive_path[0])
+        
+            if args.recursive:
+                caller(sendreceive_deep, args.send_path[0], args.receive_path[0])
+                
+        def run_delete(args):
+            keep = 5
+            if args.keep:
+                keep = args.keep[0]
+            caller(unsnap, args.snap_path[0], keep=keep)
+                
+        def no_sub(args):
+            parser.parse_args('--help')
+            
         parser = argparse.ArgumentParser(prog='btrsnap',
                                         formatter_class=argparse.RawDescriptionHelpFormatter,
                                         description='''
     btrsnap is a BTRFS wrapper to simplify dealing with snapshots.
-    You will need root privileges for actions involving the removal of snapshots.
+    You will need root privileges for some actions.
 
 
     To use, create a root directory on a BTRFS filesystem where you will keep your snapshots.
     within this directory create any number of subdirectories. Each subdirectory must contain a 
-    symbolic link pointing to a valid BTRFS subvolume.\n\n
+    symbolic link pointing to a valid BTRFS subvolume.
 
     For example:
     
@@ -304,45 +343,35 @@ if __name__ == "__main__":
             You can create a symbolic link using:
             ln -s /srv/music /snapshots/music/target
         ...         ''')
-        parser.add_argument('-s', '--snap', nargs=1, metavar='PATH', help='Creates a new timestamped BTRFS snapshot in PATH')
-        parser.add_argument('-S', '--snapdeep', nargs=1, metavar='PATH', help='Creates a timestamped BTRFS snapshot in each subdirectory of PATH.')
-        parser.add_argument('-l', '--list', nargs=1, metavar='PATH', help='List snapshots in PATH')
-        parser.add_argument('-d', '--delete', nargs=1, metavar='PATH', help='Delete all but 5 snapshots in PATH. May be modified by -k, --keep')
-        parser.add_argument('-k', '--keep', nargs=1, type=int, metavar='NUMBER', help='Number of snapshots to keep with -d, --delete ')
-        parser.add_argument('--send-receive', dest='send_receive', nargs=2, metavar='PATH', help='Send snapshots from PATH to PATH using btrfs send and receive')
-        parser.add_argument('--send-receive-deep', dest='send_receive_deep', nargs=2, metavar='PATH', help='Send snapshots from each subdirectory in PATH to a subdirectory inside PATH using btrfs send and receive')
-        parser.add_argument('--version', action='version', version='btrsnap 0.0.0')
+        subparsers = parser.add_subparsers(title='sub-commands')
+        
+        subparser_snap = subparsers.add_parser('snap', description='Creates a new timestamped BTRFS snapshot in PATH', help='Creates new timestamped BTRFS snapshot')
+        subparser_snap.add_argument('-r', '--recursive', action='store_true', help='Instead, create a snapshot in each sub directory of PATH. May not be used with -d, --delete')
+        subparser_snap.add_argument('-d', '--delete', action='store_true', help='Delete all but 5 snapshots in PATH. May be modified by -k, --keep')
+        subparser_snap.add_argument('-k', '--keep', nargs=1, type=int, metavar='N', help='keep N snapshots when deleting.')
+        subparser_snap.add_argument('snap_path', nargs=1, metavar='PATH', help='A directory on a BTRFS file system with a symlink pointing to a BTRFS subvolume')
+        subparser_snap.set_defaults(func=run_snap) 
+        
+        subparser_list = subparsers.add_parser('list', description='Show timestaps in PATH', help='Show timestamps')
+        subparser_list.add_argument('snap_path', nargs=1, metavar='PATH', help='A directory on a BTRFS filesystem that contains snapshots created by btrsnap.')
+        subparser_list.set_defaults(func=run_list)
+        
+        subparser_delete = subparsers.add_parser('delete', description='Delete all but KEEP snapshots from PATH. (Default, K=5)', help='Delete snapshots')
+        subparser_delete.add_argument('-k', '--keep', nargs=1, type=int, metavar='N', help='keep N snapshots when deleting.')
+        subparser_delete.add_argument('snap_path', nargs=1, metavar='PATH', help='A directory on a BTRFS filesystem that contains snapshots created by btrsnap.')
+        subparser_delete.set_defaults(func=run_delete)
+
+        subparser_send = subparsers.add_parser('send', description='Send all snapshots from SendPath to ReceivePath if not present.', help='Use BTRFS send/receive to smartly send snapshots from one BTRFS filesystem to another.')
+        subparser_send.add_argument('-r', '--recursive', action='store_true', help='Instead, send snapshots from each sub directory of SendPATH to a subdirectory of the same name in ReceivePATH. Subdirectories are automatically created if needed.')
+        subparser_send.add_argument('send_path', nargs=1, metavar='SendPATH', help='A directory on a BTRFS filesystem that contains snapshots created by btrsnap.')
+        subparser_send.add_argument('receive_path', nargs=1, metavar='ReceivePath', help='A directory on a BTRFS filesystem that will receive snapshots.')
+        subparser_send.set_defaults(func=run_send)
+     
         args = parser.parse_args()
-        
-        def caller(func, *args, **kargs):
-            try:
-                msg = func(*args, **kargs) 
-                if msg: 
-                    print(msg)
-            except Exception as err:
-                print('Error:', err)
-            
-                    
-        if args.snap:
-            caller(snap, args.snap[0])
-                    
-        if args.snapdeep:
-            caller(snapdeep, args.snapdeep[0])
-                   
-        if args.delete:
-            keep = 5
-            if args.keep:
-                keep = args.keep[0]
-            caller(unsnap, args.delete[0], keep=keep)
-                                   
-        if args.list:
-            caller(show_snaps, args.list[0])
-                                   
-        if args.send_receive:
-            caller(sendreceive, args.send_receive[0], args.send_receive[1])
-        
-        if args.send_receive_deep:
-            caller(sendreceive_deep, args.send_receive_deep[0], args.send_receive_deep[1])
+        try:
+            args.func(args)
+        except AttributeError:
+            no_sub(args)
                                           
            
     #start the program

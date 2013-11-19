@@ -188,6 +188,16 @@ class Test_SnapPath_Class(unittest.TestCase):
         snap = btrsnap.SnapPath(snap_dir)
         os.mkdir(os.path.join(snap_dir, second))
         self.assertEqual(third, snap.timestamp())
+    
+    def test_SnapPath_timestamp_9999_or_less(self):
+        snap_dir = self.snap_dir
+        today = datetime.date.today()
+        timestamp = today.isoformat()
+        too_big = timestamp + '-9999'
+        
+        os.mkdir(os.path.join(snap_dir, too_big))
+        snap = btrsnap.SnapPath(snap_dir)
+        self.assertRaises(Exception, snap.timestamp)
 
         
 class Test_SnapDeep_Class(unittest.TestCase):
