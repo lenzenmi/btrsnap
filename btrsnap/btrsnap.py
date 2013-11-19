@@ -48,7 +48,7 @@ class SnapDeep(Path):
     '''
     Returns list of SnapPaths within the provided root directory.
     '''
-        
+    
     def snap_paths(self):
         snap_paths = []
         contents = os.listdir(self.path)
@@ -58,7 +58,6 @@ class SnapDeep(Path):
                 snap_paths.append(SnapPath(content))
             except Exception:
                 pass
-            
         return snap_paths
                 
         
@@ -263,10 +262,8 @@ def sendreceive_deep(send_path, receive_path):
             os.mkdir(p)
     
     args = zip(snappaths, receive_paths)
-    
     for send_path, receive_path in args:
         msg.append(sendreceive(send_path, receive_path))
-        
     return '\n'.join(msg)
     
         
@@ -279,8 +276,6 @@ if __name__ == "__main__":
         
         import argparse
 
-       
-        
         def caller(func, *args, **kargs):
             try:
                 msg = func(*args, **kargs) 
@@ -297,7 +292,6 @@ if __name__ == "__main__":
                     if args.keep:
                         keep = args.keep[0]
                     caller(unsnap, args.snap_path[0], keep=keep)
-                
             if args.recursive:
                 caller(snapdeep, args.snap_path[0])
                     
@@ -343,6 +337,7 @@ if __name__ == "__main__":
             You can create a symbolic link using:
             ln -s /srv/music /snapshots/music/target
         ...         ''')
+        parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
         subparsers = parser.add_subparsers(title='sub-commands')
         
         subparser_snap = subparsers.add_parser('snap', description='Creates a new timestamped BTRFS snapshot in PATH', help='Creates new timestamped BTRFS snapshot')
