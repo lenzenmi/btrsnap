@@ -1,5 +1,3 @@
-* Change CLI to use submodes
-* Write README.rst
 * Look into man docs
 * Package for distribution
 * Send to Github
