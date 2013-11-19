@@ -163,7 +163,7 @@ def snap(path, readonly=True):
     snappath = SnapPath(path)
     btrfs = Btrfs(snappath.path)
     btrfs.snap(snappath.target, snappath.timestamp(), readonly=readonly)
-    
+        
 def unsnap(path, keep=5):
     '''
     Delete all but most recent KEEP(default 5) snapshots inside PATH
@@ -178,13 +178,13 @@ def unsnap(path, keep=5):
         snaps_to_delete = snapshots[keep:]
         for snapshot in snaps_to_delete:
             btrfs.unsnap(snapshot)
-                    
-        print('Deleted {} snapshot(s) from "{}". {} kept'.format(
+              
+        msg = 'Deleted {} snapshot(s) from "{}". {} kept'.format(
                 len(snaps_to_delete), snappath.path, keep)
-              )
-    
+                  
     else:
-        print('There are less than {} snapshot(s) in "{}"... not deleting any'.format(keep, snappath.path))
+        msg = 'There are less than {} snapshot(s) in "{}"... not deleting any'.format(keep, snappath.path)
+        return msg
 
 def snapdeep(path, readonly=True):
     '''
@@ -193,7 +193,8 @@ def snapdeep(path, readonly=True):
     snapdeep = SnapDeep(path)
     snap_paths = snapdeep.snap_paths()
     if len(snap_paths) == 0:
-        print('No snapshot directories found in \'{}\''.format(snapdeep.path))
+        msg = 'No snapshot directories found in \'{}\''.format(snapdeep.path)
+        return msg
     for snap_path in snap_paths:
         snap(snap_path.path, readonly=readonly)
 
@@ -203,10 +204,11 @@ def show_snaps(path):
     '''
     receive_path = ReceivePath(path)
     snapshots = receive_path.snapshots()
-    
+    msg = []
     for snapshot in snapshots:
-        print(snapshot)
-    print('\n"{}" contains {} snapshot(s)'.format(receive_path.path, len(snapshots)))
+        msg.append(snapshot)
+    msg.append('\n"{}" contains {} snapshot(s)'.format(receive_path.path, len(snapshots)))
+    return '\n'.join(msg)
     
 def sendreceive(send_path, receive_path):
     send = SnapPath(send_path)
@@ -226,28 +228,26 @@ def sendreceive(send_path, receive_path):
     if diff:
         if union and union[-1] < diff[0]:
             parent, snapshot = union[-1:], diff[0]
-            print(snapshot, parent)
             p1 = send_btr.send(snapshot, parent)
             receive_btr.receive(p1)
         else:
             parent, snapshot = None, diff[0]
-            print(snapshot, parent)
             p1 = send_btr.send(snapshot, parent)
             receive_btr.receive(p1)
                     
         while diff:
             if len(diff) >= 2:
                 parent, snapshot = diff.pop(0), diff[0]
-                print(snapshot, parent)
                 p1 = send_btr.send(snapshot, parent)
                 receive_btr.receive(p1)
             else:
                 diff.pop(0)
-            
+        msg = '{} snapshots copied from \'{}\' to \'{}\''.format(len(diff), send.path, receive.path)
             
         
     else:
-        print('No new snapshots to copy from \'{}\' to \'{}\''.format(send.path, receive.path))
+        msg = 'No new snapshots to copy from \'{}\' to \'{}\''.format(send.path, receive.path)
+    return msg
         
 if __name__ == "__main__":
     
@@ -290,36 +290,31 @@ if __name__ == "__main__":
         parser.add_argument('--version', action='version', version='btrsnap 0.0.0')
         args = parser.parse_args()
         
+        def caller(func, *args, **kargs):
+            try:
+                print(func(*args, **kargs)) 
+            except Exception as err:
+                print('Error:', err)
+            
+                    
         if args.snap:
-            try:
-                snap(args.snap[0])
-            except Exception as err:
-                print('Error:', err)
-        
+            caller(snap, args.snap[0])
+                    
         if args.snapdeep:
-            try:
-                snapdeep(args.snapdeep[0])
-            except Exception as err:
-                print('Error:', err)
-                
+            caller(snapdeep, args.snapdeep[0])
+                   
         if args.delete:
             keep = 5
             if args.keep:
                 keep = args.keep[0]
-            try:
-                unsnap(args.delete[0], keep=keep)
-            except Exception as err:
-                print('Error:', err)
-                
+            caller(unsnap, args.delete[0], keep=keep)
+                                   
         if args.list:
-            show_snaps(args.list[0])
-                
+            caller(show_snaps, args.list[0])
+                                   
         if args.send_receive:
-            try:
-                sendreceive(args.send_receive[0], args.send_receive[1])
-            except Exception as err:
-                print('Error:', err)
-            
+            caller(sendreceive, args.send_receive[0], args.send_receive[1])
+                                          
            
     #start the program
     main()
