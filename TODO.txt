@@ -1,6 +1,4 @@
 * Look into man docs
-* Package for distribution
-* Send to Github
 * Write PKGBUILD for arch linux
 * Add recursive delete
 * Add recursive list summary
