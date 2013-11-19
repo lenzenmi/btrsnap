@@ -1,0 +1,7 @@
+* Finish wiring tests for functions that can only be tested with root permissions
+* Change CLI to use submodes
+* Write README.rst
+* Look into man docs
+* Package for distribution
+* Send to Github
+* Write PKGBUILD for arch linux
