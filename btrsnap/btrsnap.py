@@ -79,7 +79,7 @@ class SnapPath(Path, SnapshotsMixin):
         contents = os.listdir(path=self.path)
         contents = [ link for link in contents if os.path.islink(os.path.join(self.path, link))]
         if not len(contents) == 1:
-            raise TargetError('there must be exactly 1 symlink pointing to a target btrfs subvolume'
+            raise TargetError('there must be exactly 1 symlink pointing to a target BTRFS subvolume'
                               + ' in snapshot directory {}'.format(self.path))
         self._target = os.path.realpath(os.path.abspath(os.path.join(self.path, contents[0])))
     
@@ -319,8 +319,8 @@ def main():
     
     
     To use, create a root directory on a BTRFS filesystem where you will keep your snapshots.
-    within this directory create any number of subdirectories. Each subdirectory must contain a 
-    symbolic link pointing to a valid BTRFS subvolume.
+    Within this directory create any number of subdirectories. Inside each subdirectory create a 
+    symbolic link that points to the BTRFS subvolume you wish to create snapshots of.
     
     For example:
     
@@ -337,14 +337,14 @@ def main():
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
     subparsers = parser.add_subparsers(title='sub-commands')
     
-    subparser_snap = subparsers.add_parser('snap', description='Creates a new timestamped BTRFS snapshot in PATH', help='Creates new timestamped BTRFS snapshot')
+    subparser_snap = subparsers.add_parser('snap', description='Creates a new timestamped BTRFS snapshot in PATH. The snapshot will be of the BTRFS subvolume pointed to by the symbolic link in PATH.', help='Creates new timestamped BTRFS snapshot')
     subparser_snap.add_argument('-r', '--recursive', action='store_true', help='Instead, create a snapshot in each sub directory of PATH. May not be used with -d, --delete')
     subparser_snap.add_argument('-d', '--delete', action='store_true', help='Delete all but 5 snapshots in PATH. May be modified by -k, --keep')
     subparser_snap.add_argument('-k', '--keep', nargs=1, type=int, metavar='N', help='keep N snapshots when deleting.')
     subparser_snap.add_argument('snap_path', nargs=1, metavar='PATH', help='A directory on a BTRFS file system with a symlink pointing to a BTRFS subvolume')
     subparser_snap.set_defaults(func=run_snap) 
     
-    subparser_list = subparsers.add_parser('list', description='Show timestaps in PATH', help='Show timestamps')
+    subparser_list = subparsers.add_parser('list', description='Show timestamped snapshots in PATH', help='Show timestamped snapshots')
     subparser_list.add_argument('snap_path', nargs=1, metavar='PATH', help='A directory on a BTRFS filesystem that contains snapshots created by btrsnap.')
     subparser_list.set_defaults(func=run_list)
     
@@ -353,10 +353,10 @@ def main():
     subparser_delete.add_argument('snap_path', nargs=1, metavar='PATH', help='A directory on a BTRFS filesystem that contains snapshots created by btrsnap.')
     subparser_delete.set_defaults(func=run_delete)
 
-    subparser_send = subparsers.add_parser('send', description='Send all snapshots from SendPath to ReceivePath if not present.', help='Use BTRFS send/receive to smartly send snapshots from one BTRFS filesystem to another.')
+    subparser_send = subparsers.add_parser('send', description='Send all snapshots from SendPATH to ReceivePATH if not present.', help='Use BTRFS send/receive to smartly send snapshots from one BTRFS filesystem to another.')
     subparser_send.add_argument('-r', '--recursive', action='store_true', help='Instead, send snapshots from each sub directory of SendPATH to a subdirectory of the same name in ReceivePATH. Subdirectories are automatically created if needed.')
     subparser_send.add_argument('send_path', nargs=1, metavar='SendPATH', help='A directory on a BTRFS filesystem that contains snapshots created by btrsnap.')
-    subparser_send.add_argument('receive_path', nargs=1, metavar='ReceivePath', help='A directory on a BTRFS filesystem that will receive snapshots.')
+    subparser_send.add_argument('receive_path', nargs=1, metavar='ReceivePATH', help='A directory on a BTRFS filesystem that will receive snapshots.')
     subparser_send.set_defaults(func=run_send)
      
     args = parser.parse_args()

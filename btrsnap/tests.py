@@ -26,7 +26,9 @@ def get_test_dir():
         test_dir = os.path.join(os.path.realpath(os.path.abspath(environ_path)), 'btrsnap_test_dir')
     except Exception:
         print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
-              + 'Where path = a path on a btrfs filesystem')
+              + 'Where path = a path on a btrfs filesystem\n'
+              + '\tExample:\n\t\t export BTRSNAP_TEST_DIR=\'~\''
+              )
         exit(1)
     if os.path.isdir(test_dir):
         print('{} exists. Please remove it and re-run tests'.format(test_dir))
