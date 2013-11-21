@@ -380,7 +380,7 @@ def main():
             You can create a symbolic link using:
             ln -s /srv/music /snapshots/music/target
     ...         ''')
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0.1-dev')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.1.0-dev')
     subparsers = parser.add_subparsers(title='sub-commands')
     
     subparser_snap = subparsers.add_parser('snap', description='Creates a new timestamped BTRFS snapshot in PATH. The snapshot will be of the BTRFS subvolume pointed to by the symbolic link in PATH.', help='Creates new timestamped BTRFS snapshot')
