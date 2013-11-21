@@ -222,7 +222,6 @@ class Test_SnapDeep_Class(unittest.TestCase):
             os.mkdir(snap_dir)
             os.symlink(link_dir, os.path.join(snap_dir, 'target'))
 
-
     def tearDown(self):
         test_dir = self.test_dir
         link_dir = self.link_dir
@@ -239,6 +238,46 @@ class Test_SnapDeep_Class(unittest.TestCase):
         self.assertEqual(len(snap_dirs), len(snap_paths))
         for snap_path in snap_paths:
             self.assertIn(snap_path, snap_dirs)
+            
+
+class Test_ReceiveDeep_Class(unittest.TestCase):
+    test_dir = get_test_dir()
+    timestamps = ['2012-01-01-0001', '2012-01-01-0002', '2012-02-01-0001', '2012-02-01-0002']
+    snap_dirs = []
+    for number in range(5):
+        name = 'snap_dir{}'.format(number)
+        snap_dir = os.path.join(test_dir, name)
+        snap_dirs.append(snap_dir)
+
+    def setUp(self):
+        test_dir = self.test_dir
+        snap_dirs = self.snap_dirs
+        timestamps = self.timestamps
+                
+        os.mkdir(test_dir)
+        for snap_dir in snap_dirs:
+            os.mkdir(snap_dir)
+            for timestamp in timestamps:
+                os.mkdir(os.path.join(snap_dir, timestamp))
+
+    def tearDown(self):
+        test_dir = self.test_dir
+        shutil.rmtree(test_dir)  
+        
+    def test_ReceiveDeep_snapshots(self):
+        test_dir = self.test_dir
+        snap_dirs = self.snap_dirs
+        receive_deep = btrsnap.ReceiveDeep(test_dir)
+        receive_paths = receive_deep.receive_paths()
+        receive_paths = [receive_path.path for receive_path in receive_paths]
+        
+        self.assertEqual(len(snap_dirs), len(receive_paths))
+        for receive_path in receive_paths:
+            self.assertIn(receive_path, snap_dirs)
+            
+        for receive_path in receive_deep.receive_paths():
+            self.assertIsInstance(receive_path, btrsnap.ReceivePath, 'Did not receive a list of Receive Paths')
+        
         
 class Test_Btrfs_Class(unittest.TestCase):
     test_dir = get_test_dir()

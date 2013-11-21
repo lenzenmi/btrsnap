@@ -46,21 +46,36 @@ class SnapshotsMixin:
             
 class SnapDeep(Path):
     '''
-    Returns list of SnapPaths within the provided root directory.
+    Returns list of SnapPaths within the provided path.
     '''
     
     def snap_paths(self):
         snap_paths = []
         contents = os.listdir(self.path)
-        contents = [ os.path.join(self.path, d) for d in contents if os.path.isdir(os.path.join(self.path, d))]
+        contents = [os.path.join(self.path, d) for d in contents if os.path.isdir(os.path.join(self.path, d))]
         for content in contents:
             try:
                 snap_paths.append(SnapPath(content))
             except Exception:
                 pass
         return snap_paths
-                
-        
+    
+    
+class ReceiveDeep(Path):
+    '''
+    Returns a list of ReceivePahts within the provided path
+    '''
+    
+    def receive_paths(self):
+        receive_paths = []
+        contents = os.listdir(self.path)
+        contents = [d for d in contents if os.path.isdir(os.path.join(self.path, d))]
+        for content in contents:
+            try:
+                receive_paths.append(ReceivePath(os.path.join(self.path,content)))
+            except Exception:
+                pass
+        return receive_paths
 class SnapPath(Path, SnapshotsMixin):
     '''
     Returns an object that has verified the path has a symlink pointing to a target directory.
@@ -206,6 +221,34 @@ def show_snaps(path):
         msg.append(snapshot)
     msg.append('\n"{}" contains {} snapshot(s)'.format(receive_path.path, len(snapshots)))
     return '\n'.join(msg)
+
+def show_snaps_deep(path):
+    '''
+    Recursively list snapshots inside PATH.
+    '''
+    msg = []
+    overall_snapshot_count = 0
+    overall_path_count = 0
+    receive_deep = ReceiveDeep(path)
+    receive_paths = receive_deep.receive_paths()
+    for p in receive_paths:
+        snapshots = p.snapshots()
+        msg.append('\'{}\'/'.format(p.path))
+        if snapshots:
+            newest = snapshots[0]
+            oldest = snapshots[-1]
+            msg.append('\t- {} snapshots: Newest = {}, Oldest = {}'.format(len(snapshots), newest[:-5], oldest[:-5]))
+            for snapshot in snapshots:
+                msg.append('\t\t{}'.format(snapshot))
+                overall_snapshot_count += 1
+        else:
+            msg.append('\t\tNo snapshots')
+        msg.append('')
+        overall_path_count +=1
+    msg.append('{:{s}^{n}}'.format(' Summary ', s='-', n=60))
+    msg.append('\'{}\' contains {} snapshots in {} subdirectories'.format(path, overall_snapshot_count, overall_path_count))
+    
+    return '\n'.join(msg)
     
 def sendreceive(send_path, receive_path):
     '''
@@ -293,7 +336,10 @@ def main():
             caller(snapdeep, args.snap_path[0])
                 
     def run_list(args):
-        caller(show_snaps, args.snap_path[0])
+        if not args.recursive:
+            caller(show_snaps, args.snap_path[0])
+        else:
+            caller(show_snaps_deep, args.snap_path[0])
         
     def run_send(args):
         if not args.recursive:
@@ -334,7 +380,7 @@ def main():
             You can create a symbolic link using:
             ln -s /srv/music /snapshots/music/target
     ...         ''')
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.1-dev')
     subparsers = parser.add_subparsers(title='sub-commands')
     
     subparser_snap = subparsers.add_parser('snap', description='Creates a new timestamped BTRFS snapshot in PATH. The snapshot will be of the BTRFS subvolume pointed to by the symbolic link in PATH.', help='Creates new timestamped BTRFS snapshot')
@@ -346,6 +392,7 @@ def main():
     
     subparser_list = subparsers.add_parser('list', description='Show timestamped snapshots in PATH', help='Show timestamped snapshots')
     subparser_list.add_argument('snap_path', nargs=1, metavar='PATH', help='A directory on a BTRFS filesystem that contains snapshots created by btrsnap.')
+    subparser_list.add_argument('-r', '--recursive', action='store_true', help='Instead, show summary statistics for all sub directories in PATH.')
     subparser_list.set_defaults(func=run_list)
     
     subparser_delete = subparsers.add_parser('delete', description='Delete all but KEEP snapshots from PATH. (Default, K=5)', help='Delete snapshots')
