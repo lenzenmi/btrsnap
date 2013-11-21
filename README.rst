@@ -4,6 +4,9 @@
 
 The btrsnap module is written for **python 3.x**.
 
+.. contents:: Table of Contents
+
+
 The SNAPPATH:
 --------------
 
@@ -24,62 +27,68 @@ Example
         |-- photos
         |   `-- target -> /home/photos
         `-- webserver
-          `-- target -> /srv/http
+            `-- target -> /srv/http
         
 In this example, photos and webserver are both valid SNAPPATHS and inside a parent folder. 
-    Symbolic links can be created with the command
-    
-    .. code-block:: bash
-    
-        $ln -s path target
+
+    Note:
+        Symbolic links can be created with the 'ln' command:
+        
+        .. code-block:: bash
+        
+            $ln -s path target
     
 USAGE:
 ------
-btrsnap has four main modes of operation. One of these modes must be specified from the command-line.
+.. note:: btrsnap has four main modes of operation. One of these modes must be specified from the command-line.
 
 snap:
 ~~~~~
 ::
 
     usage: btrsnap snap [-h] [-r] [-d] [-k N] PATH
-
-    Creates a new timestamped BTRFS snapshot in PATH
-
+    
+    Creates a new timestamped BTRFS snapshot in PATH. The snapshot will be of the
+    BTRFS subvolume pointed to by the symbolic link in PATH.
+    
     positional arguments:
-     PATH             A directory on a BTRFS file system with a symlink pointing
-                      to a BTRFS subvolume
+      PATH             A directory on a BTRFS file system with a symlink pointing
+                       to a BTRFS subvolume
     
     optional arguments:
-     -h, --help       show this help message and exit
-     -r, --recursive  Instead, create a snapshot in each sub directory of PATH.
-                      May not be used with -d, --delete
-     -d, --delete     Delete all but 5 snapshots in PATH. May be modified by -k,
+      -h, --help       show this help message and exit
+      -r, --recursive  Instead, create a snapshot in each sub directory of PATH.
+                       May not be used with -d, --delete
+      -d, --delete     Delete all but 5 snapshots in PATH. May be modified by -k,
                        --keep
-      -k N, --keep N   keep N snapshots when deleting.
-      
+      -k N, --keep N   keep N snapshots when deleting
+    
+
 list:
 ~~~~~
 ::
 
-    usage: btrsnap list [-h] PATH
-
-    Show timestaps in PATH
+    usage: btrsnap list [-h] [-r] PATH
+    
+    Show timestamped snapshots in PATH
     
     positional arguments:
-      PATH        A directory on a BTRFS filesystem that contains snapshots
-                  created by btrsnap.
-
+      PATH             A directory on a BTRFS filesystem that contains snapshots
+                       created by btrsnap.
+    
     optional arguments:
-      -h, --help  show this help message and exit
+      -h, --help       show this help message and exit
+      -r, --recursive  Instead, show summary statistics for all sub directories in
+                       PATH.
 
 delete:
 ~~~~~~~
 ::
 
     usage: btrsnap delete [-h] [-k N] PATH
-
+    
     Delete all but KEEP snapshots from PATH. (Default, K=5)
-
+    
     positional arguments:
       PATH            A directory on a BTRFS filesystem that contains snapshots
                       created by btrsnap.
@@ -87,23 +96,28 @@ delete:
     optional arguments:
       -h, --help      show this help message and exit
       -k N, --keep N  keep N snapshots when deleting.
-
+    
 send:      
 ~~~~~
 ::
 
-    usage: btrsnap send [-h] [-r] SendPATH ReceivePath
-
-    Send all snapshots from SendPath to ReceivePath if not present.
-
+    usage: btrsnap send [-h] [-r] SendPATH ReceivePATH
+    
+    Send all snapshots from SendPATH to ReceivePATH if not present.
+    
     positional arguments:
       SendPATH         A directory on a BTRFS filesystem that contains snapshots
                        created by btrsnap.
-      ReceivePath      A directory on a BTRFS filesystem that will receive
+      ReceivePATH      A directory on a BTRFS filesystem that will receive
                        snapshots.
-
+    
     optional arguments:
       -h, --help       show this help message and exit
       -r, --recursive  Instead, send snapshots from each sub directory of SendPATH
                        to a subdirectory of the same name in ReceivePATH.
                        Subdirectories are automatically created if needed.
+                       
+Installation:
+-------------
+* Instructions on btrsnap wiki:
+    https://github.com/lenzenmi/btrsnap/wiki/Install
