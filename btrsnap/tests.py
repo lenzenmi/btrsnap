@@ -348,6 +348,7 @@ class Test_functions_(unittest.TestCase):
     snap_dir = os.path.join(test_dir, 'snap_dir')
     link_dir = os.path.join(test_dir, 'link_dir')
     receive_dir = os.path.join(test_dir, 'receive_dir')
+    timestmaps = ['2012-01-01-0001', '2012-01-01-0002', '2012-02-01-0001', '2012-02-01-0002']
 
     def setUp(self):
         test_dir = self.test_dir
@@ -459,12 +460,31 @@ class Test_functions_(unittest.TestCase):
         subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, first])
         subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, second])
         
-        self.assertTrue(True, btrsnap.show_snaps(snap_dir))  
+        output = btrsnap.show_snaps(snap_dir)
+        
+        self.assertIn(os.path.split(first)[-1], output, 'first snapshot should be listed')
+        self.assertIn(os.path.split(second)[-1], output, 'second snapshot should be listed')
         
         #cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
         subprocess.call(['btrfs', 'subvolume', 'delete', second])      
         
+    def test_show_snaps_deep(self):
+        test_dir = self.test_dir
+        snap_dir = self.snap_dir
+        receive_dir = self.receive_dir
+        link_dir = self.link_dir
+        timestamps = self.timestmaps
+        for timestamp in timestamps:
+            os.mkdir(os.path.join(snap_dir, timestamp))
+            
+        output = btrsnap.show_snaps_deep(test_dir)
+        
+        should_be_in_output = timestamps
+        should_be_in_output.extend([test_dir, snap_dir, receive_dir, link_dir])
+        for item in should_be_in_output:
+            self.assertIn(item, output, 'More items should be listed in output')
+                
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
