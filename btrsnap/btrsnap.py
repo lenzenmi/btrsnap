@@ -70,7 +70,7 @@ class SnapDeep(Path):
 
 class ReceiveDeep(Path):
     '''
-    Returns a list of ReceivePahts within the provided path
+    Returns a list of ReceivePaths within the provided path
     '''
 
     def receive_paths(self):
@@ -261,20 +261,19 @@ def show_snaps_deep(path):
     receive_paths = receive_deep.receive_paths()
     for p in receive_paths:
         snapshots = p.snapshots()
-        msg.append('\'{}\'/'.format(p.path))
+        msg.append('\n\'{}\'/'.format(p.path))
         if snapshots:
             newest = snapshots[0]
             oldest = snapshots[-1]
-            msg.append('\t- {} snapshots: Newest = {}, Oldest = {}'.format(
+            msg.append('\t{} snapshots: Newest = {}, Oldest = {}'.format(
                 len(snapshots), newest[:-5], oldest[:-5]))
             for snapshot in snapshots:
                 msg.append('\t\t{}'.format(snapshot))
                 overall_snapshot_count += 1
         else:
             msg.append('\t\tNo snapshots')
-        msg.append('')
         overall_path_count += 1
-    msg.append('{:{s}^{n}}'.format(' Summary ', s='-', n=60))
+    msg.append('\n{:{s}^{n}}'.format(' Summary ', s='-', n=60))
     msg.append('\'{}\' contains {} snapshots in {} subdirectories'.format(
         path, overall_snapshot_count, overall_path_count))
 
