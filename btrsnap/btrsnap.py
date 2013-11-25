@@ -472,7 +472,7 @@ def main():
 
     subparser_delete = subparsers.add_parser('delete',
                          description='Delete all but KEEP snapshots'
-                            ' from PATH. (Default, K=5)',
+                            ' from PATH. (Default, KEEP=5)',
                             help='Delete snapshots'
                             )
     subparser_delete.add_argument('-k', '--keep',
