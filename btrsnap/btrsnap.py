@@ -423,13 +423,16 @@ def main():
                         )
     subparsers = parser.add_subparsers(title='sub-commands')
 
-    subparser_snap = subparsers.add_parser(
-        'snap',
-        description='Creates a new timestamped BTRFS snapshot'
-                    ' in PATH. The snapshot will be of the BTRFS subvolume'
-                    ' pointed to by the symbolic link in PATH.',
-        help='Creates new timestamped BTRFS snapshot'
-        )
+    subparser_snap = subparsers.add_parser('snap',
+                                           description='Creates a new'
+                                           ' timestamped BTRFS snapshot'
+                                           ' in PATH. The snapshot will'
+                                           ' be of the BTRFS subvolume'
+                                           ' pointed to by the symbolic'
+                                           ' link in PATH.',
+                                           help='Creates new timestamped BTRFS'
+                                           ' snapshot'
+                                           )
     subparser_snap.add_argument('-r', '--recursive',
                                 action='store_true',
                                 help='Instead, create a snapshot in each'
@@ -473,12 +476,12 @@ def main():
                                 )
     subparser_list.set_defaults(func=run_list)
 
-    subparser_delete = subparsers.add_parser(
-        'delete',
-        description='Delete all but KEEP snapshots'
-                    ' from PATH. (Default, KEEP=5)',
-        help='Delete snapshots'
-        )
+    subparser_delete = subparsers.add_parser('delete',
+                                             description='Delete all but KEEP'
+                                             ' snapshots from PATH.'
+                                             ' (Default, KEEP=5)',
+                                             help='Delete snapshots'
+                                             )
     subparser_delete.add_argument('-k', '--keep',
                                   nargs=1,
                                   type=int,
