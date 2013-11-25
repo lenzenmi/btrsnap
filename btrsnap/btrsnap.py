@@ -81,7 +81,7 @@ class ReceiveDeep(Path):
         for content in contents:
             try:
                 receive_paths.append(ReceivePath(os.path.join(
-                                    self.path, content)))
+                    self.path, content)))
             except Exception:
                 pass
         return receive_paths
@@ -108,8 +108,8 @@ class SnapPath(Path, SnapshotsMixin):
                     if os.path.islink(os.path.join(self.path, link))]
         if not len(contents) == 1:
             raise TargetError('there must be exactly 1 symlink pointing to a'
-                            ' target BTRFS subvolume in snapshot'
-                            ' directory {}'.format(self.path))
+                              ' target BTRFS subvolume in snapshot'
+                              ' directory {}'.format(self.path))
         self._target = os.path.realpath(os.path.abspath(os.path.join(
                                         self.path, contents[0])))
 
@@ -124,10 +124,10 @@ class SnapPath(Path, SnapshotsMixin):
             less_than_last_snapshot = False
         timestamp = None
 
-        while (timestamp == None or timestamp in snapshots
-               or less_than_last_snapshot == True):
+        while (timestamp is None or timestamp in snapshots
+               or less_than_last_snapshot is True):
             timestamp = '{}-{:04d}'.format(today.isoformat(), counter)
-            if less_than_last_snapshot == True:
+            if less_than_last_snapshot is True:
                 if timestamp <= last_snapshot:
                     less_than_last_snapshot = True
                 else:
@@ -216,7 +216,7 @@ def unsnap(path, keep=5):
         for snapshot in snaps_to_delete:
             btrfs.unsnap(snapshot)
         msg = 'Deleted {} snapshot(s) from "{}". {} kept'.format(
-                len(snaps_to_delete), snappath.path, keep)
+            len(snaps_to_delete), snappath.path, keep)
     else:
         msg = ('There are less than {} snapshot(s) in "{}"...'
                ' not deleting any'.format(keep, snappath.path))
@@ -246,7 +246,7 @@ def show_snaps(path):
     for snapshot in snapshots:
         msg.append(snapshot)
     msg.append('\n"{}" contains {} snapshot(s)'.format(
-                receive_path.path, len(snapshots)))
+        receive_path.path, len(snapshots)))
     return '\n'.join(msg)
 
 
@@ -266,7 +266,7 @@ def show_snaps_deep(path):
             newest = snapshots[0]
             oldest = snapshots[-1]
             msg.append('\t- {} snapshots: Newest = {}, Oldest = {}'.format(
-                    len(snapshots), newest[:-5], oldest[:-5]))
+                len(snapshots), newest[:-5], oldest[:-5]))
             for snapshot in snapshots:
                 msg.append('\t\t{}'.format(snapshot))
                 overall_snapshot_count += 1
@@ -276,7 +276,7 @@ def show_snaps_deep(path):
         overall_path_count += 1
     msg.append('{:{s}^{n}}'.format(' Summary ', s='-', n=60))
     msg.append('\'{}\' contains {} snapshots in {} subdirectories'.format(
-            path, overall_snapshot_count, overall_path_count))
+        path, overall_snapshot_count, overall_path_count))
 
     return '\n'.join(msg)
 
@@ -318,10 +318,10 @@ def sendreceive(send_path, receive_path):
             else:
                 diff.pop(0)
         msg = '{} snapshots copied from \'{}\' to \'{}\''.format(
-                number_sent, send.path, receive.path)
+            number_sent, send.path, receive.path)
     else:
         msg = 'No new snapshots to copy from \'{}\' to \'{}\''.format(
-                send.path, receive.path)
+            send.path, receive.path)
     return msg
 
 
@@ -393,9 +393,10 @@ def main():
     def no_sub(args):
         parser.parse_args('--help')
 
-    parser = argparse.ArgumentParser(prog='btrsnap',
-                        formatter_class=argparse.RawDescriptionHelpFormatter,
-                        description='''
+    parser = argparse.ArgumentParser(
+        prog='btrsnap',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='''
     btrsnap is a BTRFS wrapper to simplify dealing with snapshots.
     You will need root privileges for some actions.
 
@@ -422,12 +423,13 @@ def main():
                         )
     subparsers = parser.add_subparsers(title='sub-commands')
 
-    subparser_snap = subparsers.add_parser('snap',
-                        description='Creates a new timestamped BTRFS snapshot'
-                        ' in PATH. The snapshot will be of the BTRFS subvolume'
-                        ' pointed to by the symbolic link in PATH.',
-                        help='Creates new timestamped BTRFS snapshot'
-                        )
+    subparser_snap = subparsers.add_parser(
+        'snap',
+        description='Creates a new timestamped BTRFS snapshot'
+                    ' in PATH. The snapshot will be of the BTRFS subvolume'
+                    ' pointed to by the symbolic link in PATH.',
+        help='Creates new timestamped BTRFS snapshot'
+        )
     subparser_snap.add_argument('-r', '--recursive',
                                 action='store_true',
                                 help='Instead, create a snapshot in each'
@@ -454,9 +456,10 @@ def main():
     subparser_snap.set_defaults(func=run_snap)
 
     subparser_list = subparsers.add_parser('list',
-                       description='Show timestamped snapshots in PATH',
-                       help='Show timestamped snapshots'
-                       )
+                                           description='Show timestamped'
+                                           ' snapshots in PATH',
+                                           help='Show timestamped snapshots'
+                                           )
     subparser_list.add_argument('snap_path',
                                 nargs=1,
                                 metavar='PATH',
@@ -470,11 +473,12 @@ def main():
                                 )
     subparser_list.set_defaults(func=run_list)
 
-    subparser_delete = subparsers.add_parser('delete',
-                         description='Delete all but KEEP snapshots'
-                            ' from PATH. (Default, KEEP=5)',
-                            help='Delete snapshots'
-                            )
+    subparser_delete = subparsers.add_parser(
+        'delete',
+        description='Delete all but KEEP snapshots'
+                    ' from PATH. (Default, KEEP=5)',
+        help='Delete snapshots'
+        )
     subparser_delete.add_argument('-k', '--keep',
                                   nargs=1,
                                   type=int,
