@@ -1,3 +1,7 @@
+==========
+README.rst
+==========
+
 .. Note::
     This is the code documentation for developers. If you just want to install and use btrsnap, see the README.rst file in the root directory of this project.
 
