@@ -1,4 +1,5 @@
 #Helper modules for development in Eclipse IDE
 coverage==3.7
 ipython==1.1.0
+sphinx
 pep8
