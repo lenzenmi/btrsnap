@@ -1,4 +1,3 @@
-* Look into man docs
-* Add recursive delete
-	* Delete by age
-	* Delete until free space
+* Look into docs
+* Delete by age
+* Delete until free space

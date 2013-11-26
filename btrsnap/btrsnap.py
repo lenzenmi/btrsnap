@@ -223,6 +223,21 @@ def unsnap(path, keep=5):
     return msg
 
 
+def unsnap_deep(path, keep=5):
+    '''Delete all but KEEP (default 5) snapshots from each directory
+    inside of path'''
+    msg = []
+    receive_deep = ReceiveDeep(path)
+    receive_paths = receive_deep.receive_paths()
+    receive_paths = [path.path for path in receive_paths]
+    if len(receive_paths) == 0:
+        msg = 'No subdirectories found in \'{}\''.format(receive_deep.path)
+        return msg
+    for path in receive_paths:
+        msg.append(unsnap(path, keep))
+    return '\n'.join(msg)
+
+
 def snapdeep(path, readonly=True):
     '''
     Create snapshots in each subdirectory in PATH.
@@ -360,15 +375,19 @@ def main():
             print('Error:', err)
 
     def run_snap(args):
-        if not args.recursive:
-            caller(snap, args.snap_path[0])
-            if args.delete:
+        keep = None
+        if args.delete:
                 keep = 5
                 if args.keep:
                     keep = args.keep[0]
+        if not args.recursive:
+            caller(snap, args.snap_path[0])
+            if not keep is None:
                 caller(unsnap, args.snap_path[0], keep=keep)
         if args.recursive:
             caller(snapdeep, args.snap_path[0])
+            if not keep is None:
+                caller(unsnap_deep, args.snap_path[0], keep=keep)
 
     def run_list(args):
         if not args.recursive:
@@ -387,7 +406,10 @@ def main():
         keep = 5
         if args.keep:
             keep = args.keep[0]
-        caller(unsnap, args.snap_path[0], keep=keep)
+        if args.recursive:
+            caller(unsnap_deep, args.snap_path[0], keep=keep)
+        else:
+            caller(unsnap, args.snap_path[0], keep=keep)
 
     def no_sub(args):
         parser.parse_args('--help')
@@ -435,8 +457,7 @@ def main():
     subparser_snap.add_argument('-r', '--recursive',
                                 action='store_true',
                                 help='Instead, create a snapshot in each'
-                                ' subdirectory of PATH. May not be used with'
-                                ' -d, --delete'
+                                ' subdirectory of PATH.'
                                 )
     subparser_snap.add_argument('-d', '--delete',
                                 action='store_true',
@@ -471,7 +492,7 @@ def main():
     subparser_list.add_argument('-r', '--recursive',
                                 action='store_true',
                                 help='Instead, show summary statistics for all'
-                                ' sub directories in PATH.'
+                                ' subdirectories in PATH.'
                                 )
     subparser_list.set_defaults(func=run_list)
 
@@ -487,6 +508,10 @@ def main():
                                   metavar='N',
                                   help='keep N snapshots when deleting.'
                                   )
+    subparser_delete.add_argument('-r', '--recursive',
+                                  action='store_true',
+                                  help='Instead delete all but KEEP snapshots'
+                                  ' from each subdirectory')
     subparser_delete.add_argument('snap_path',
                                   nargs=1,
                                   metavar='PATH',
@@ -531,5 +556,5 @@ def main():
 
 if __name__ == "__main__":
 
-    #start the program
+    # start the program
     main()

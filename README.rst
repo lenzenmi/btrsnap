@@ -57,13 +57,11 @@ snap:
     
     optional arguments:
       -h, --help       show this help message and exit
-      -r, --recursive  Instead, create a snapshot in each sub directory of PATH.
-                       May not be used with -d, --delete
+      -r, --recursive  Instead, create a snapshot in each subdirectory of PATH.
       -d, --delete     Delete all but 5 snapshots in PATH. May be modified by -k,
                        --keep
-      -k N, --keep N   keep N snapshots when deleting
+      -k N, --keep N   keep N snapshots when deleting.
     
-
 list:
 ~~~~~
 ::
@@ -78,24 +76,26 @@ list:
     
     optional arguments:
       -h, --help       show this help message and exit
-      -r, --recursive  Instead, show summary statistics for all sub directories in
-                       PATH.
-
+      -r, --recursive  Instead, show summary statistics for all subdirectories in
+                       PATH
+    
 delete:
 ~~~~~~~
 ::
 
-    usage: btrsnap delete [-h] [-k N] PATH
+    usage: btrsnap delete [-h] [-k N] [-r] PATH
     
-    Delete all but KEEP snapshots from PATH. (Default, K=5)
+    Delete all but KEEP snapshots from PATH. (Default, KEEP=5)
     
     positional arguments:
-      PATH            A directory on a BTRFS filesystem that contains snapshots
-                      created by btrsnap.
+      PATH             A directory on a BTRFS filesystem that contains snapshots
+                       created by btrsnap.
     
     optional arguments:
-      -h, --help      show this help message and exit
-      -k N, --keep N  keep N snapshots when deleting.
+      -h, --help       show this help message and exit
+      -k N, --keep N   keep N snapshots when deleting.
+      -r, --recursive  Instead delete all but KEEP snapshots from each
+                       subdirectory
     
 send:      
 ~~~~~
@@ -116,7 +116,7 @@ send:
       -r, --recursive  Instead, send snapshots from each sub directory of SendPATH
                        to a subdirectory of the same name in ReceivePATH.
                        Subdirectories are automatically created if needed.
-                       
+
 Installation:
 -------------
 * Instructions on btrsnap wiki:

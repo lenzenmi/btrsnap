@@ -105,10 +105,12 @@ class Test_functions_(unittest.TestCase):
         link_path = self.link_dir
         timestamp = self.timestamp
 
-        #create some snapshots
+        # create some snapshots
         count = 1
         while count <= 5:
-            subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
+            subprocess.call(['btrfs', 'subvolume', 'snap', '-r',
+                             link_path,
+                             os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
             count += 1
 
         btrsnap.sendreceive(send_path, receive_path)
@@ -130,7 +132,7 @@ class Test_functions_(unittest.TestCase):
         link_path = self.link_dir
         timestamp = self.timestamp
 
-        #create some snapshots
+        # create some snapshots
         count = 1
         while count <= 5:
             subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
@@ -144,7 +146,7 @@ class Test_functions_(unittest.TestCase):
         walker = os.walk(receive_path)
         walker = [walk[1] for walk in walker]
 
-        r_snaps = []
+        r_snaps = []  # Flatten List of Lists
         for subs in walker:
             r_snaps.extend(subs)
         r_snaps = [snap for snap in r_snaps if re.search(pattern, snap)]
@@ -160,7 +162,42 @@ class Test_functions_(unittest.TestCase):
         for sub in s_snaps:
             self.assertIn(sub, r_snaps, '{} snapshot was not received'.format(sub))
 
+    def test_unsnap_deep(self):
+        send_paths = self.parent_snap_dir
+        send_path = self.snap_dir1
+        second_send_path = self.snap_dir2
+        receive_path = self.receive_dir
+        link_path = self.link_dir
+        timestamp = self.timestamp
+
+        # create some snapshots
+        count = 1
+        while count <= 5:
+            subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
+            subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(second_send_path, '{}-000{}'.format(timestamp, count))])
+            count += 1
+
+        def unsnap_deep_tester(keep):
+
+            btrsnap.unsnap_deep(send_paths, keep=keep)
+
+            pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
+
+            walker = os.walk(send_paths)
+            walker = [walk[1] for walk in walker]
+
+            snaps = []
+            for subs in walker:  # Flatten List of Lists
+                snaps.extend(subs)
+            snaps = [snap for snap in snaps if re.search(pattern, snap)]
+
+            self.assertEqual(len(snaps), 2 * keep,
+                             "Wrong number of snapshots survived")
+
+        for keep in range(5, -1, -1):
+            unsnap_deep_tester(keep)
+
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
