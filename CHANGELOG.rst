@@ -7,6 +7,7 @@
 
 DEV
 ~~~
+* Added sphinx code documentation
 * Cleaned up code to pep8 standards
 * Added recursive list function
 * Added recursive delete function

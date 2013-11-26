@@ -1,3 +1,2 @@
-* Look into docs
 * Delete by age
 * Delete until free space
