@@ -567,9 +567,9 @@ def main():
     def run_snap(args):
         keep = None
         if args.delete:
-                keep = 5
-                if args.keep:
-                    keep = args.keep[0]
+            keep = 5
+            if args.keep:
+                keep = args.keep[0]
         if not args.recursive:
             caller(snap, args.snap_path[0])
             if not keep is None:
