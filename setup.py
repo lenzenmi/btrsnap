@@ -1,19 +1,12 @@
 from setuptools import setup, find_packages
 setup(
     name = "btrsnap",
-    version = "1.0.0",
-    packages = find_packages(),
+    version = "1.1.0",
+    packages = find_packages(exclude=["tests*"]),
     entry_points = {
         'console_scripts': [
             'btrsnap = btrsnap.btrsnap:main',
         ]
-    },
-
-    
-    package_data = {
-        # If any package contains *.txt or *.rst files, include them:
-        '': ['*.txt', '*.rst'],
-        # And include any *.msg files found in the 'hello' package, too:
     },
 
     # metadata for upload to PyPI
