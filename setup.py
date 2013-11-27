@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 setup(
     name = "btrsnap",
     version = "1.1.0",
-    packages = find_packages(exclude="btrsnap.tests*"),
+    packages = find_packages(exclude=["tests*"]),
     entry_points = {
         'console_scripts': [
             'btrsnap = btrsnap.btrsnap:main',
