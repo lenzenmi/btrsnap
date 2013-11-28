@@ -40,13 +40,13 @@ class Path:
         Verifies that a path exists.
 
         Args:
-            path (str): a path on a filesystem.
+            * path (str): a path on a filesystem.
 
         Attributes:
-            path (str): absolute path.
+            * path (str): absolute path.
 
         Raises:
-            PathError: invalid path.
+            * PathError: invalid path.
         '''
         if os.path.isdir(os.path.expanduser(path)):
             self.path = os.path.abspath(os.path.expanduser(path))
@@ -61,9 +61,11 @@ class SnapshotsMixin:
 
     def snapshots(self):
         '''
+        List folders in self.path with a name matching a btrsnap timestamp.
+
         Returns:
-            (list(str)): a list of directories inside self.path that
-                         match the btrsnap timestamp YYYY-MM-DD-####
+            * (list(str)): a list of directories inside self.path that
+              match the btrsnap timestamp YYYY-MM-DD-####
         '''
         pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
         contents = os.listdir(path=self.path)
@@ -79,19 +81,19 @@ class SnapDeep(Path):
     Generates a list of SnapPath objects for each valid subdirectory of path.
 
     Args:
-        path (str): path on the filesystem.
+        * path (str): path on the filesystem.
 
     Attributes:
-        path (str): absolute path on the filesystem.
+        * path (str): absolute path on the filesystem.
 
     Raises:
-        PathError
+        * PathError
     '''
 
     def snap_paths(self):
         '''
         Returns:
-            (list(SnapPath): a list of SnapPath objects for each subdirectory
+            * (list(SnapPath): a list of SnapPath objects for each subdirectory
             of self.path.
         '''
         snap_paths = []
@@ -112,19 +114,19 @@ class ReceiveDeep(Path):
     path.
 
     Args:
-        path (str): path on the filesystem.
+        * path (str): path on the filesystem.
 
     Attributes:
-        path (str): absolute path on the filesystem.
+        * path (str): absolute path on the filesystem.
 
     Raises:
-        PathError
+        * PathError
     '''
 
     def receive_paths(self):
         '''
         Returns:
-            (list(ReceivePath): a list of ReceivePath objects for each
+            * (list(ReceivePath): a list of ReceivePath objects for each
             subdirectory of self.path.
         '''
         receive_paths = []
@@ -145,15 +147,15 @@ class SnapPath(Path, SnapshotsMixin):
     Verifies that path exists, and that it contains a symlink.
 
     Agruments:
-        path (str): path on filesystem
+        * path (str): path on filesystem
 
     Attributes:
-        target (str): Absolute path where the symlink points.
-        path (str): Absolute path on the filesystem
+        * target (str): Absolute path where the symlink points.
+        * path (str): Absolute path on the filesystem
 
     Raises:
-        TargetError:
-        PathError:
+        * TargetError:
+        * PathError:
     '''
     def __init__(self, path):
         Path.__init__(self, path)
@@ -180,10 +182,10 @@ class SnapPath(Path, SnapshotsMixin):
         Returns the next availible timestamp in self.path
 
         Arguments:
-            counter (int): start number for last 4 digits of timestamp.
+            * counter (int): start number for last 4 digits of timestamp.
 
         Returns:
-            (str): next availible timestamp
+            * (str): next availible timestamp
         '''
         today = datetime.date.today()
         snapshots = self.snapshots()
@@ -216,14 +218,14 @@ class ReceivePath(Path, SnapshotsMixin):
     Verifies Path and lists Snapshots inside self.path
 
     Args:
-        Path (str): Path on filesystem
+        * Path (str): Path on filesystem
 
     Attributes:
-        path (str): absolute path
-        Snapshots (list(str)): List of snapshots inside self.path
+        * path (str): absolute path
+        * Snapshots (list(str)): List of snapshots inside self.path
 
     Raises:
-        PathError:
+        * PathError:
     '''
     pass
 
@@ -233,13 +235,13 @@ class Btrfs(Path):
     Wrapper class for BTRFS functions
 
     Args:
-        Path (str): Path on filesystem
+        * Path (str): Path on filesystem
 
     Attributes:
-        path (str): absolute path
+        * path (str): absolute path
 
     Raises:
-        PathError:
+        * PathError:
     '''
 
     def snap(self, target, timestamp, readonly=True):
@@ -247,12 +249,12 @@ class Btrfs(Path):
         Create a snapshot in self.path
 
         Args:
-            target (str): absolute path of BTRFS subvolume to be cloned.
-            timestamp (str): name of the snapshot to be created.
-            readonly (bool): True/False, new snapshot is readonly.
+            * target (str): absolute path of BTRFS subvolume to be cloned.
+            * timestamp (str): name of the snapshot to be created.
+            * readonly (bool): True/False, new snapshot is readonly.
 
         Raises:
-            BtrfsError:
+            * BtrfsError:
         '''
         snapshot = os.path.join(self.path, timestamp)
         if readonly:
@@ -270,10 +272,10 @@ class Btrfs(Path):
         Delete a snapshot in self.path
 
         Args:
-            timestamp (str): name of the snapshot to be deleted.
+            * timestamp (str): name of the snapshot to be deleted.
 
         Raises:
-            BtrfsError:
+            * BtrfsError:
         '''
         snapshot = os.path.join(self.path, timestamp)
         args = ['btrfs', 'subvolume', 'delete', snapshot]
@@ -287,12 +289,12 @@ class Btrfs(Path):
         Send a snapshot using btrfs-progs.
 
         Args:
-            snapshot (str): absolute path of snapshot to be sent.
-            parent (str): absolute path of parent snapshot alread on receiving
-            filesystem.
+            * snapshot (str): absolute path of snapshot to be sent.
+            * parent (str): absolute path of parent snapshot alread on
+            receiving filesystem.
 
         Returns:
-            (subprocess.Popen): can be used to pipe output to receive.
+            * (subprocess.Popen): can be used to pipe output to receive.
         '''
         args = ['btrfs', 'send']
         if parent:
@@ -308,10 +310,10 @@ class Btrfs(Path):
         Receive a snapshot using btrfs-progs.
 
         Args:
-            p1 (subprocess.Popen): send process
+            * p1 (subprocess.Popen): send process
 
         Raises:
-            BtrfsError:
+            * BtrfsError:
         '''
         args = ['btrfs', 'receive', self.path]
         p2 = subprocess.Popen(args, stdin=p1.stdout,
@@ -330,8 +332,8 @@ def snap(path, readonly=True):
     of the subvolume pointed to by the symlink inside PATH.
 
     Args:
-        path (str): path on filesystem
-        readonly (bool): create readonly snapshot?
+        * path (str): path on filesystem
+        * readonly (bool): create readonly snapshot?
     '''
     snappath = SnapPath(path)
     btrfs = Btrfs(snappath.path)
@@ -343,11 +345,11 @@ def unsnap(path, keep=5):
     Delete all but most recent KEEP(default 5) snapshots inside PATH
 
     Args:
-        path (str): path on filesystem
-        keep (int): number of snapshots to keep
+        * path (str): path on filesystem
+        * keep (int): number of snapshots to keep
 
     Returns:
-        msg (str): results
+        * msg (str): results
     '''
     snappath = ReceivePath(path)
     btrfs = Btrfs(snappath.path)
@@ -373,11 +375,11 @@ def unsnap_deep(path, keep=5):
     inside of path
 
     Args:
-        path (str): path on filesystem
-        keep (int): number of snapshots to keep
+        * path (str): path on filesystem
+        * keep (int): number of snapshots to keep
 
     Returns:
-        msg (str): results
+        * msg (str): results
     '''
     msg = []
     receive_deep = ReceiveDeep(path)
@@ -396,11 +398,11 @@ def snapdeep(path, readonly=True):
     Create a snapshot in each subdirectory in PATH.
 
     Args:
-        path (str): path on filesystem
-        readonly (bool): Create readonly snapshots?
+        * path (str): path on filesystem
+        * readonly (bool): Create readonly snapshots?
 
     Returns:
-        msg (str): results
+        * msg (str): results
     '''
     snapdeep = SnapDeep(path)
     snap_paths = snapdeep.snap_paths()
@@ -416,10 +418,10 @@ def show_snaps(path):
     List snapshots inside PATH.
 
     Args:
-        path (str): path on filesystem.
+        * path (str): path on filesystem.
 
     Returns:
-        msg (str): results
+        * msg (str): results
     '''
     receive_path = ReceivePath(path)
     snapshots = receive_path.snapshots()
@@ -436,10 +438,10 @@ def show_snaps_deep(path):
     Recursively list snapshots inside PATH.
 
     Args:
-        path (str): Path on filesystem.
+        * path (str): Path on filesystem.
 
     Returns:
-        msg (str): results
+        * msg (str): results
     '''
     msg = []
     overall_snapshot_count = 0
@@ -472,11 +474,11 @@ def sendreceive(send_path, receive_path):
     Send snapshots from one BTRFS PATH to another.
 
     Args:
-        send_path: path to snapshot to send
-        receive_path: path to receive snapshot in.
+        * send_path: path to snapshot to send
+        * receive_path: path to receive snapshot in.
 
     Returns:
-        (str): results
+        * (str): results
     '''
     send = SnapPath(send_path)
     receive = ReceivePath(receive_path)
@@ -523,12 +525,12 @@ def sendreceive_deep(send_path, receive_path):
     Send all snapshots in subdirectories of send_path to receive_path.
 
     Args:
-        send_path (str): absolute path holding one or more snapshot
+        * send_path (str): absolute path holding one or more snapshot
                          directories.
-        receive_path (str): absolute path to receive snapshot directories in.
+        * receive_path (str): absolute path to receive snapshot directories in.
 
     Returns:
-        (str): results.
+        * (str): results.
     '''
     snappaths = SnapDeep(send_path)
     snappaths = snappaths.snap_paths()

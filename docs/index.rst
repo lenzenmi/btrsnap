@@ -3,17 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to btrsnap's documentation!
-===================================
+.. contents::
+
+.. _btrsnap-functions:
 
 btrsnap functions
------------------
+=================
 
 .. automodule:: btrsnap
    :members: snap, snapdeep, unsnap, unsnap_deep, show_snaps, show_snaps_deep, sendreceive, sendreceive_deep
 
 btrsnap Classes
----------------
+===============
+
+.. note:: These Clasess are used internally and are referenced by the toplevel :ref:`functions <btrsnap-functions>`.
 
 .. autoclass:: btrsnap.Btrfs
    :members:
@@ -37,7 +40,7 @@ btrsnap Classes
    :members:
 
 btrsnap Exceptions
-------------------
+==================
 
 .. autoexception:: btrsnap.PathError
 
