@@ -153,13 +153,23 @@ class Test_SnapPath_Class(unittest.TestCase):
         snap = btrsnap.SnapPath(snap_dir)
         self.assertEqual(timestamps, snap.snapshots())
 
-    def test_SnapPath_list_ignore_folders_without_timestamp(self):
+    def test_SnapPath_snapshotsMixin_ignore_folders_without_timestamp(self):
         snap_dir = self.snap_dir
         timestamps = sorted(self.timestamps, reverse=True)
         os.mkdir(os.path.join(snap_dir, 'some-unrelated-dir'))
 
         snap = btrsnap.SnapPath(snap_dir)
         self.assertEqual(timestamps, snap.snapshots())
+
+    def test_SnapPath_snapshotsMixin_ignore_timestamp_like_folders(self):
+        snap_dir = self.snap_dir
+        timestamps = sorted(self.timestamps, reverse=True)
+        os.mkdir(os.path.join(snap_dir, '2013-07-11-0001-bogus'))
+        os.mkdir(os.path.join(snap_dir, 'bogus-2013-07-11-002'))
+
+        snap = btrsnap.SnapPath(snap_dir)
+        self.assertEqual(timestamps, snap.snapshots(),
+                         'bogus folders should be ignored')
 
     def test_SnapPath_ensure_symlink_exists(self):
         snap_dir = self.snap_dir
@@ -330,7 +340,7 @@ class Test_Btrfs_Class(unittest.TestCase):
 
         self.assertTrue(os.path.isdir(os.path.join(snap_dir, snap_name)))
 
-        #cleanup
+        # cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete',
                          os.path.join(snap_dir, snap_name)])
 
@@ -402,7 +412,7 @@ class Test_functions_(unittest.TestCase):
         btrsnap.snap(snap_dir, readonly=False)
         self.assertTrue(os.path.isdir(second))
 
-        #cleanup
+        # cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
         subprocess.call(['btrfs', 'subvolume', 'delete', second])
 
@@ -444,7 +454,7 @@ class Test_functions_(unittest.TestCase):
         self.assertTrue(os.path.isdir(first))
         self.assertTrue(os.path.isdir(second))
 
-        #cleanup
+        # cleanup
         btrsnap.unsnap(snap_dir, keep=0)
 
     def test_snapdeep(self):
@@ -457,7 +467,7 @@ class Test_functions_(unittest.TestCase):
         btrsnap.snapdeep(test_dir, readonly=False)
         self.assertTrue(os.path.isdir(first))
 
-        #cleanup
+        # cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
 
     def test_snapdeep_no_snappaths(self):
@@ -489,7 +499,7 @@ class Test_functions_(unittest.TestCase):
         self.assertIn(os.path.split(second)[-1], output,
                       'second snapshot should be listed')
 
-        #cleanup
+        # cleanup
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
         subprocess.call(['btrfs', 'subvolume', 'delete', second])
 
@@ -512,5 +522,5 @@ class Test_functions_(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

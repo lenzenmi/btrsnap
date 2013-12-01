@@ -67,7 +67,7 @@ class SnapshotsMixin:
             * (list(str)): a list of directories inside self.path that
               match the btrsnap timestamp YYYY-MM-DD-####
         '''
-        pattern = re.compile(r'\d{4}-\d{2}-\d{2}-\d{4}')
+        pattern = re.compile(r'^\d{4}-\d{2}-\d{2}-\d{4}$')
         contents = os.listdir(path=self.path)
         contents = [d for d in contents
                     if os.path.isdir(os.path.join(self.path, d))
@@ -632,7 +632,7 @@ def main():
             ln -s /srv/music /snapshots/music/target
     ...         ''')
     parser.add_argument('--version', action='version',
-                        version='%(prog)s 1.1.0'
+                        version='%(prog)s 1.1.1'
                         )
     subparsers = parser.add_subparsers(title='sub-commands')
 
