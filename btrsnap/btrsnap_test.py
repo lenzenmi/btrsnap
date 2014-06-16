@@ -1,17 +1,14 @@
 #!/usr/bin/python
 '''
-Created on Nov 15, 2013
 You must set the environment variable 'BTRSNAP_TEST_DIR' to a directory on a
 BTRFS subvolume
 where you want the tests to run.
 
     example:
-    BTRSNAP_TEST_DIR='~/' python tests.py
+    BTRSNAP_TEST_DIR='~/' python btrsnap_test.py
 
 BTRFS snapshots are created using the readonly=False flag. This is to allow
 the test modules to delete readonly snapshots
-
-@author: mike
 '''
 import unittest
 import os

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 '''
-Created on Nov 15, 2013
 **These tests must be run with root permissions**
 
 You must set the environment variable 'BTRSNAP_TEST_DIR' to a directory on a
@@ -8,12 +7,10 @@ BTRFS subvolume where you want the tests to run.
 
     example:
     export BTRSNAP_TEST_DIR='~/'
-    python tests_as_root.py
+    python btrsnap_root_perms_required_test.py
 
 BTRFS snapshots are created using the readonly=False flag. This is to allow the
 test modules to delete readonly snapshots
-
-@author: mike
 '''
 import unittest
 import os
@@ -119,7 +116,10 @@ class Test_functions_(unittest.TestCase):
 
         r_snaps = [x for x in os.listdir(receive_path) if os.path.isdir(os.path.join(receive_path, x)) and re.search(pattern, x)]
         s_snaps = [x for x in os.listdir(send_path) if os.path.isdir(os.path.join(send_path, x)) and re.search(pattern, x)]
-
+        print(r_snaps)
+        print(s_snaps)
+        print(send_path)
+        input('?')
         self.assertTrue(len(r_snaps) == len(s_snaps), 'not all paths were transfered')
         for snapshot in s_snaps:
             self.assertIn(snapshot, r_snaps, '{} snapshot was not received'.format(snapshot))

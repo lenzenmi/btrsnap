@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 '''
 Writen for python 3.x
-btrsnap is a BTRFS wrapper to simplify working with timestamped snapshots.
+btrsnap simplifies working with btrfs snapshots.
 '''
 
 import os
@@ -10,21 +10,28 @@ import datetime
 import subprocess
 
 
-class PathError(Exception):
+class BtrfsnapError(Exception):
+    '''
+    Root error for the btrsnap module
+    '''
+    pass
+
+
+class PathError(BtrfsnapError):
     '''
     Path does not exist on the filesystem
     '''
     pass
 
 
-class TargetError(Exception):
+class TargetError(BtrfsnapError):
     '''
     There is not exactly 1 symlink inside the snapshot directory
     '''
     pass
 
 
-class BtrfsError(Exception):
+class BtrfsError(BtrfsnapError):
     '''
     btrfs-progs returned a non zero exit code
     '''
@@ -364,7 +371,7 @@ def unsnap(path, keep=5):
         msg = 'Deleted {} snapshot(s) from "{}". {} kept'.format(
             len(snaps_to_delete), snappath.path, keep)
     else:
-        msg = ('There are less than {} snapshot(s) in "{}"...'
+        msg = ('There are {} or less snapshot(s) in "{}"...'
                ' not deleting any'.format(keep, snappath.path))
     return msg
 
