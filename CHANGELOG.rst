@@ -14,6 +14,7 @@ v2.0.0
         the ``--delete`` option was removed from the *snap* sub-command. ``--keep`` now implies delete.
         
 * Improved help/error messages
+* Suppressed btrfs output when deleting -- became too noisy
 * Code refactoring for easier code maintenance
 
 v1.1.1

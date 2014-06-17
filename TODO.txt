@@ -1,4 +1,4 @@
 * Allow deleting all snapshots older than a certain date
-* Remove oldest snapshots until a certain level of free space is reached
+* Allow removing snapshots until a certain level of free space is reached
 * Move all tests to a single root-perms-required test module
-
+* Add logging

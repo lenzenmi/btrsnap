@@ -227,7 +227,8 @@ class Btrfs(Path):
         '''
         snapshot = os.path.join(self.path, timestamp)
         args = ['btrfs', 'subvolume', 'delete', snapshot]
-        return_code = subprocess.call(args)
+        return_code = subprocess.call(args, stderr=subprocess.DEVNULL,
+                                      stdout=subprocess.DEVNULL)
         if return_code:
             raise BtrfsError('BTRFS failed to delete the subvolume.'
                              ' Perhaps you need root permissions')
