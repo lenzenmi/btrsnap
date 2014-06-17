@@ -10,28 +10,28 @@ import datetime
 import subprocess
 
 
-class BtrfsnapError(Exception):
+class BtrsnapError(Exception):
     '''
     Root error for the btrsnap module
     '''
     pass
 
 
-class PathError(BtrfsnapError):
+class PathError(BtrsnapError):
     '''
     Path does not exist on the filesystem
     '''
     pass
 
 
-class TargetError(BtrfsnapError):
+class TargetError(BtrsnapError):
     '''
     There is not exactly 1 symlink inside the snapshot directory
     '''
     pass
 
 
-class BtrfsError(BtrfsnapError):
+class BtrfsError(BtrsnapError):
     '''
     btrfs-progs returned a non zero exit code
     '''
