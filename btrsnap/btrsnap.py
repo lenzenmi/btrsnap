@@ -312,7 +312,7 @@ def unsnap(path, keep=5):
         msg = 'Deleted {} snapshot(s) from "{}". {} kept'.format(
             len(snaps_to_delete), snappath.path, keep)
     else:
-        msg = ('There are {} or less snapshot(s) in "{}"...'
+        msg = ('There are {} or less snapshot(s) in "{}" ...'
                ' not deleting any'.format(keep, snappath.path))
     return msg
 
@@ -516,13 +516,11 @@ def main():
 
     def run_snap(args):
         keep = None
-        if args.delete:
-            keep = 5
-            if args.keep:
-                keep = args.keep[0]
+        if (args.keep) and (args.keep[0] >= 0):
+            keep = args.keep[0]
         if not args.recursive:
             caller(snap, args.snap_path[0])
-            if not keep is None:
+            if keep is not None:
                 caller(unsnap, args.snap_path[0], keep=keep)
         if args.recursive:
             caller(snapdeep, args.snap_path[0])
@@ -551,7 +549,7 @@ def main():
         else:
             caller(unsnap, args.snap_path[0], keep=keep)
 
-    def no_sub(args):
+    def no_subparser(args):
         parser.parse_args('--help')
 
     parser = argparse.ArgumentParser(
@@ -573,11 +571,11 @@ def main():
 
         |-- snapshots
             |
-            |-- music
-            |   |-- target (symbolic link pointing to => /srv/music)
+            |`-- music
+            |    `-- target (symbolic link pointing to => /srv/music)
             |
-            |-- photos
-                |-- target (symbolic link pointing to => /srv/photos)
+             `-- photos
+                 `-- target (symbolic link pointing to => /srv/photos)
 
     .. note::
         You can create a symbolic link using::
@@ -596,28 +594,24 @@ def main():
     subparser_snap = subparsers.add_parser('snap',
                                            description='Creates a new'
                                            ' timestamped BTRFS snapshot'
-                                           ' in PATH. The snapshot will'
-                                           ' be of the BTRFS subvolume'
-                                           ' pointed to by the symbolic'
-                                           ' link in PATH.',
+                                           ' inside of PATH. The snapshot will'
+                                           ' be a snapshot of the BTRFS'
+                                           ' subvolume pointed to by the'
+                                           ' symbolic link in PATH.',
                                            help='Creates new timestamped BTRFS'
                                            ' snapshot'
                                            )
     subparser_snap.add_argument('-r', '--recursive',
                                 action='store_true',
-                                help='Instead, create a snapshot in each'
-                                ' subdirectory of PATH.'
-                                )
-    subparser_snap.add_argument('-d', '--delete',
-                                action='store_true',
-                                help='Delete all but 5 snapshots in PATH.'
-                                ' May be modified by -k, --keep'
+                                help='Instead, create a snapshot inside of'
+                                ' each directory located inside of PATH.'
                                 )
     subparser_snap.add_argument('-k', '--keep',
                                 nargs=1,
                                 type=int,
                                 metavar='N',
-                                help='keep N snapshots when deleting.'
+                                help='After creating, delete all but N'
+                                ' snapshots'
                                 )
     subparser_snap.add_argument('snap_path',
                                 nargs=1,
@@ -701,7 +695,7 @@ def main():
     try:
         args.func(args)
     except AttributeError:
-        no_sub(args)
+        no_subparser(args)
 
 if __name__ == "__main__":
 
