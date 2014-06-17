@@ -617,25 +617,34 @@ def main():
         prog='btrsnap',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description='''
-    btrsnap is a BTRFS wrapper to simplify dealing with snapshots.
-    You will need root privileges for some actions.
+    btrsnap is a BTRFS wrapper that simplifies dealing with snapshots.
+    *You will need root privileges for some actions.*
 
+    Before using btrsnap:
 
-    To use, create a root directory on a BTRFS filesystem where you will keep
-    your snapshots. Within this directory create any number of subdirectories.
-    Inside each subdirectory create a symbolic link that points to the BTRFS
-    subvolume you wish to create snapshots of.
+    * create a parent directory on a BTRFS filesystem where you will keep
+      your snapshots.
+    * Within this directory create any number of subdirectories.
+    * Inside each subdirectory create **one** symbolic link that points to a
+      BTRFS subvolume. The link can have any name.
 
-    For example:
+    For example::
 
-            /snapshots
-                -/music
-                    target (symbolic link pointing to => /srv/music)
-                -/photos
-                    target (symbolic link pointing to => /srv/photos)
+        |-- snapshots
+            |
+            |-- music
+            |   |-- target (symbolic link pointing to => /srv/music)
+            |
+            |-- photos
+                |-- target (symbolic link pointing to => /srv/photos)
 
-    Note:
-            You can create a symbolic link using:
+    .. note::
+        You can create a symbolic link using::
+
+            ln -s
+
+        example::
+
             ln -s /srv/music /snapshots/music/target
     ...         ''')
     parser.add_argument('--version', action='version',
