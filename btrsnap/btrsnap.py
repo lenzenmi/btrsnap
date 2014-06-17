@@ -77,21 +77,6 @@ class Path:
         contents.sort(reverse=True)
         return contents
 
-
-class SnapDeep(Path):
-    '''
-    Generates a list of SnapPath objects for each valid subdirectory of path.
-
-    Args:
-        * path (str): path on the filesystem.
-
-    Attributes:
-        * path (str): absolute path on the filesystem.
-
-    Raises:
-        * PathError
-    '''
-
     def snap_paths(self):
         '''
         Returns:
@@ -108,22 +93,6 @@ class SnapDeep(Path):
             except Exception:
                 pass
         return snap_paths
-
-
-class ReceiveDeep(Path):
-    '''
-    Generates a list of Path objects for each valid subdirectory of
-    path.
-
-    Args:
-        * path (str): path on the filesystem.
-
-    Attributes:
-        * path (str): absolute path on the filesystem.
-
-    Raises:
-        * PathError
-    '''
 
     def receive_paths(self):
         '''
@@ -367,7 +336,7 @@ def unsnap_deep(path, keep=5):
         * msg (str): results
     '''
     msg = []
-    receive_deep = ReceiveDeep(path)
+    receive_deep = Path(path)
     receive_paths = receive_deep.receive_paths()
     receive_paths = [path.path for path in receive_paths]
     if len(receive_paths) == 0:
@@ -389,7 +358,7 @@ def snapdeep(path, readonly=True):
     Returns:
         * msg (str): results
     '''
-    snapdeep = SnapDeep(path)
+    snapdeep = Path(path)
     snap_paths = snapdeep.snap_paths()
     if len(snap_paths) == 0:
         msg = 'No snapshot directories found in \'{}\''.format(snapdeep.path)
@@ -431,7 +400,7 @@ def show_snaps_deep(path):
     msg = []
     overall_snapshot_count = 0
     overall_path_count = 0
-    receive_deep = ReceiveDeep(path)
+    receive_deep = Path(path)
     receive_paths = receive_deep.receive_paths()
     for p in receive_paths:
         snapshots = p.snapshots()
@@ -517,8 +486,8 @@ def sendreceive_deep(send_path, receive_path):
     Returns:
         * (str): results.
     '''
-    snappaths = SnapDeep(send_path)
-    snappaths = snappaths.snap_paths()
+    snapdeep = Path(send_path)
+    snappaths = snapdeep.snap_paths()
     snappaths = [snappath.path for snappath in snappaths]
     receive_path = Path(receive_path)
     receive_path = receive_path.path

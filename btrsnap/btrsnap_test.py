@@ -246,7 +246,7 @@ class Test_SnapDeep_Class(unittest.TestCase):
     def test_Snapdeep_snap_paths(self):
         test_dir = self.test_dir
         snap_dirs = self.snap_dirs
-        snap_deep = btrsnap.SnapDeep(test_dir)
+        snap_deep = btrsnap.Path(test_dir)
         snap_paths = snap_deep.snap_paths()
         snap_paths = [snap_path.path for snap_path in snap_paths]
 
@@ -285,7 +285,7 @@ class Test_ReceiveDeep_Class(unittest.TestCase):
     def test_ReceiveDeep_snapshots(self):
         test_dir = self.test_dir
         snap_dirs = self.snap_dirs
-        receive_deep = btrsnap.ReceiveDeep(test_dir)
+        receive_deep = btrsnap.Path(test_dir)
         receive_paths = receive_deep.receive_paths()
         receive_paths = [receive_path.path for receive_path in receive_paths]
 
