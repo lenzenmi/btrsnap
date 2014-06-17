@@ -77,40 +77,34 @@ class Path:
         contents.sort(reverse=True)
         return contents
 
-    def snap_paths(self):
+    def snap_paths_list(self):
         '''
         Returns:
             * list(SnapPath): a list of SnapPath objects for each subdirectory
-            of self.path.
+            inside of self.path.
         '''
-        snap_paths = []
-        contents = os.listdir(self.path)
-        contents = [os.path.join(self.path, d) for d in contents
-                    if os.path.isdir(os.path.join(self.path, d))]
-        for content in contents:
-            try:
-                snap_paths.append(SnapPath(content))
-            except Exception:
-                pass
-        return snap_paths
+        return self._list_objects(SnapPath)
 
-    def receive_paths(self):
+    def paths_list(self):
         '''
         Returns:
-            * (list(Path): a list of Path objects for each
-            subdirectory of self.path.
+            * list(Path): a list of Path objects for each subdirectory
+            inside of self.path.
         '''
-        receive_paths = []
+        return self._list_objects(Path)
+
+    def _list_objects(self, obj):
+        objects = []
         contents = os.listdir(self.path)
-        contents = [d for d in contents
-                    if os.path.isdir(os.path.join(self.path, d))]
+        contents = [directory for directory in contents
+                    if os.path.isdir(os.path.join(self.path, directory))]
         for content in contents:
             try:
-                receive_paths.append(Path(os.path.join(
+                objects.append(obj(os.path.join(
                     self.path, content)))
             except Exception:
                 pass
-        return receive_paths
+        return objects
 
 
 class SnapPath(Path):
@@ -337,7 +331,7 @@ def unsnap_deep(path, keep=5):
     '''
     msg = []
     receive_deep = Path(path)
-    receive_paths = receive_deep.receive_paths()
+    receive_paths = receive_deep.paths_list()
     receive_paths = [path.path for path in receive_paths]
     if len(receive_paths) == 0:
         msg = 'No subdirectories found in \'{}\''.format(receive_deep.path)
@@ -359,7 +353,7 @@ def snapdeep(path, readonly=True):
         * msg (str): results
     '''
     snapdeep = Path(path)
-    snap_paths = snapdeep.snap_paths()
+    snap_paths = snapdeep.snap_paths_list()
     if len(snap_paths) == 0:
         msg = 'No snapshot directories found in \'{}\''.format(snapdeep.path)
         return msg
@@ -401,7 +395,7 @@ def show_snaps_deep(path):
     overall_snapshot_count = 0
     overall_path_count = 0
     receive_deep = Path(path)
-    receive_paths = receive_deep.receive_paths()
+    receive_paths = receive_deep.paths_list()
     for p in receive_paths:
         snapshots = p.snapshots()
         msg.append('\n\'{}\'/'.format(p.path))
@@ -487,7 +481,7 @@ def sendreceive_deep(send_path, receive_path):
         * (str): results.
     '''
     snapdeep = Path(send_path)
-    snappaths = snapdeep.snap_paths()
+    snappaths = snapdeep.snap_paths_list()
     snappaths = [snappath.path for snappath in snappaths]
     receive_path = Path(receive_path)
     receive_path = receive_path.path

@@ -247,11 +247,11 @@ class Test_SnapDeep_Class(unittest.TestCase):
         test_dir = self.test_dir
         snap_dirs = self.snap_dirs
         snap_deep = btrsnap.Path(test_dir)
-        snap_paths = snap_deep.snap_paths()
-        snap_paths = [snap_path.path for snap_path in snap_paths]
+        snap_paths_list = snap_deep.snap_paths_list()
+        snap_paths_list = [snap_path.path for snap_path in snap_paths_list]
 
-        self.assertEqual(len(snap_dirs), len(snap_paths))
-        for snap_path in snap_paths:
+        self.assertEqual(len(snap_dirs), len(snap_paths_list))
+        for snap_path in snap_paths_list:
             self.assertIn(snap_path, snap_dirs)
 
 
@@ -286,14 +286,14 @@ class Test_ReceiveDeep_Class(unittest.TestCase):
         test_dir = self.test_dir
         snap_dirs = self.snap_dirs
         receive_deep = btrsnap.Path(test_dir)
-        receive_paths = receive_deep.receive_paths()
-        receive_paths = [receive_path.path for receive_path in receive_paths]
+        paths_list = receive_deep.paths_list()
+        paths_list = [receive_path.path for receive_path in paths_list]
 
-        self.assertEqual(len(snap_dirs), len(receive_paths))
-        for receive_path in receive_paths:
+        self.assertEqual(len(snap_dirs), len(paths_list))
+        for receive_path in paths_list:
             self.assertIn(receive_path, snap_dirs)
 
-        for receive_path in receive_deep.receive_paths():
+        for receive_path in receive_deep.paths_list():
             self.assertIsInstance(receive_path, btrsnap.Path,
                                   'Did not receive a list of Receive Paths'
                                   )
