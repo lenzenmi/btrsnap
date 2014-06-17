@@ -31,7 +31,7 @@ Example
         
 In this example, photos and webserver are both valid SNAPPATHS and inside a parent folder. 
 
-    Note:
+.. note::
         Symbolic links can be created with the 'ln' command:
         
         .. code-block:: bash
@@ -45,11 +45,11 @@ USAGE:
 snap:
 ~~~~~
 ::
-
-    usage: btrsnap snap [-h] [-r] [-d] [-k N] PATH
+   
+    usage: btrsnap snap [-h] [-r] [-k N] PATH
     
-    Creates a new timestamped BTRFS snapshot in PATH. The snapshot will be of the
-    BTRFS subvolume pointed to by the symbolic link in PATH.
+    Creates a new timestamped BTRFS snapshot inside of PATH. The snapshot will be
+    a snapshot of the BTRFS subvolume pointed to by the symbolic link in PATH.
     
     positional arguments:
       PATH             A directory on a BTRFS file system with a symlink pointing
@@ -57,10 +57,10 @@ snap:
     
     optional arguments:
       -h, --help       show this help message and exit
-      -r, --recursive  Instead, create a snapshot in each subdirectory of PATH.
-      -d, --delete     Delete all but 5 snapshots in PATH. May be modified by -k,
-                       --keep
-      -k N, --keep N   keep N snapshots when deleting.
+      -r, --recursive  Instead, create a snapshot inside of each directory located
+                       inside of PATH
+      -k N, --keep N   After creating, delete all but N snapshots
+    
     
 list:
 ~~~~~

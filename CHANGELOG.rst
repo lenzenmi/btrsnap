@@ -6,6 +6,16 @@
  CHANGELOG
 -----------
 
+v2.0.0
+~~~~~~
+.. attention:: 
+
+    :SYNTAX CHANGE:
+        the ``--delete`` option was removed from the *snap* sub-command. ``--keep`` now implies delete.
+        
+* Improved help/error messages
+* Code refactoring for easier code maintenance
+
 v1.1.1
 ~~~~~~
 

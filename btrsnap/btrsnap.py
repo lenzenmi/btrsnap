@@ -516,7 +516,7 @@ def main():
 
     def run_snap(args):
         keep = None
-        if (args.keep) and (args.keep[0] >= 0):
+        if (args.keep):
             keep = args.keep[0]
         if not args.recursive:
             caller(snap, args.snap_path[0])
@@ -587,7 +587,7 @@ def main():
             ln -s /srv/music /snapshots/music/target
     ...         ''')
     parser.add_argument('--version', action='version',
-                        version='%(prog)s 1.1.1'
+                        version='%(prog)s 2.0.0'
                         )
     subparsers = parser.add_subparsers(title='sub-commands')
 
@@ -604,7 +604,7 @@ def main():
     subparser_snap.add_argument('-r', '--recursive',
                                 action='store_true',
                                 help='Instead, create a snapshot inside of'
-                                ' each directory located inside of PATH.'
+                                ' each directory located inside of PATH'
                                 )
     subparser_snap.add_argument('-k', '--keep',
                                 nargs=1,

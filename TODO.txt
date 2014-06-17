@@ -1,5 +1,4 @@
-* Delete by age
-* Delete until free space
-* Combine --delete and --keep flags
-* Move all tests to a single root-perms-required file
+* Allow deleting all snapshots older than a certain date
+* Remove oldest snapshots until a certain level of free space is reached
+* Move all tests to a single root-perms-required test module
 
