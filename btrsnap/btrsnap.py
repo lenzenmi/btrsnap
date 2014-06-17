@@ -402,7 +402,7 @@ def show_snaps_deep(path):
         if snapshots:
             newest = snapshots[0]
             oldest = snapshots[-1]
-            msg.append('\t{} snapshots: Newest = {}, Oldest = {}'.format(
+            msg.append('\t{} snapshot(s): Newest = {}, Oldest = {}'.format(
                 len(snapshots), newest[:-5], oldest[:-5]))
             for snapshot in snapshots:
                 msg.append('\t\t{}'.format(snapshot))
