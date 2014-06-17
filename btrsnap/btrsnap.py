@@ -243,9 +243,9 @@ class Btrfs(Path):
         Send a snapshot using btrfs-progs.
 
         Args:
-            * snapshot (str): absolute path of snapshot to be sent.
-            * parent (str): absolute path of parent snapshot alread on
-            receiving filesystem.
+            * snapshot (str): snapshot to be sent relative to self.path.
+            * parent (str): parent snapshot relative to self.path.
+                **must alread be on receiving filesystem.**
 
         Returns:
             * (subprocess.Popen): can be used to pipe output to receive.
