@@ -2,15 +2,13 @@
 '''
 **These tests must be run with root permissions**
 
-You must set the environment variable 'BTRSNAP_TEST_DIR' to a directory on a
-BTRFS subvolume where you want the tests to run.
+You must set the environment variable ``BTRSNAP_TEST_DIR`` to point to
+a directory in the *root* BTRFS volume. If a non-root subvolume is specified,
+the Send and Receive tests will fail.
 
     example:
-    export BTRSNAP_TEST_DIR='~/'
+    export BTRSNAP_TEST_DIR='/mnt/BTRFSROOT/'
     python btrsnap_root_perms_required_test.py
-
-BTRFS snapshots are created using the readonly=False flag. This is to allow the
-test modules to delete readonly snapshots
 '''
 import unittest
 import os
@@ -31,10 +29,7 @@ def get_test_dir():
             'btrsnap_test_dir'
             )
     except Exception:
-        print('you must assign the environment variable BTRSNAP_TEST_DIR=PATH\n'
-              'Where path = a path on a btrfs filesystem\n'
-              '\tExample:\n\t\t export BTRSNAP_TEST_DIR=\'~\''
-              )
+        print(__doc__)
         exit(1)
     if os.path.isdir(test_dir):
         print('{} exists. Please remove it and re-run tests'.format(test_dir))
@@ -110,6 +105,7 @@ class Test_functions_(unittest.TestCase):
                              os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
             count += 1
 
+        input('?')
         btrsnap.sendreceive(send_path, receive_path)
 
         pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')

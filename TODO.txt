@@ -1,2 +1,5 @@
 * Delete by age
 * Delete until free space
+* Combine --delete and --keep flags
+* Move all tests to a single root-perms-required file
+
