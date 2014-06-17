@@ -40,7 +40,7 @@ class BtrfsError(BtrfsnapError):
 
 class Path:
     '''
-    Base Class for working with filesystem paths
+    Base Class for working with filesystem folders
     '''
     def __init__(self, path):
         '''
@@ -58,7 +58,7 @@ class Path:
         if os.path.isdir(os.path.expanduser(path)):
             self.path = os.path.abspath(os.path.expanduser(path))
         else:
-            raise PathError('Path not valid')
+            raise PathError('{} is not a valid folder name'.format(path))
 
 
 class SnapshotsMixin:
@@ -68,7 +68,8 @@ class SnapshotsMixin:
 
     def snapshots(self):
         '''
-        List folders in self.path with a name matching a btrsnap timestamp.
+        List folders all folders in *self.path* whose name matches the
+        btrsnap timestamp format: yyyy-mm-dd-####.
 
         Returns:
             * (list(str)): a list of directories inside self.path that
@@ -100,7 +101,7 @@ class SnapDeep(Path):
     def snap_paths(self):
         '''
         Returns:
-            * (list(SnapPath): a list of SnapPath objects for each subdirectory
+            * list(SnapPath): a list of SnapPath objects for each subdirectory
             of self.path.
         '''
         snap_paths = []
@@ -151,7 +152,7 @@ class ReceiveDeep(Path):
 
 class SnapPath(Path, SnapshotsMixin):
     '''
-    Verifies that path exists, and that it contains a symlink.
+    Verifies that path exists, and that it contains exactly one symlink.
 
     Agruments:
         * path (str): path on filesystem
@@ -220,7 +221,7 @@ class SnapPath(Path, SnapshotsMixin):
         return timestamp
 
 
-class ReceivePath(Path, SnapshotsMixin):
+class ReceivePath(SnapshotsMixin, Path):
     '''
     Verifies Path and lists Snapshots inside self.path
 

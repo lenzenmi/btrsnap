@@ -105,17 +105,11 @@ class Test_functions_(unittest.TestCase):
                              os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
             count += 1
 
-        input('?')
         btrsnap.sendreceive(send_path, receive_path)
-
         pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
 
         r_snaps = [x for x in os.listdir(receive_path) if os.path.isdir(os.path.join(receive_path, x)) and re.search(pattern, x)]
         s_snaps = [x for x in os.listdir(send_path) if os.path.isdir(os.path.join(send_path, x)) and re.search(pattern, x)]
-        print(r_snaps)
-        print(s_snaps)
-        print(send_path)
-        input('?')
         self.assertTrue(len(r_snaps) == len(s_snaps), 'not all paths were transfered')
         for snapshot in s_snaps:
             self.assertIn(snapshot, r_snaps, '{} snapshot was not received'.format(snapshot))
