@@ -342,7 +342,7 @@ def unsnap_deep(path, keep=5):
     return '\n'.join(msg)
 
 
-def snapdeep(path, readonly=True):
+def snap_deep(path, readonly=True):
     '''
     Create a snapshot in each subdirectory in PATH.
 
@@ -353,10 +353,10 @@ def snapdeep(path, readonly=True):
     Returns:
         * msg (str): results
     '''
-    snapdeep = Path(path)
-    snap_paths = snapdeep.snap_paths_list()
+    snap_deep = Path(path)
+    snap_paths = snap_deep.snap_paths_list()
     if len(snap_paths) == 0:
-        msg = 'No snapshot directories found in \'{}\''.format(snapdeep.path)
+        msg = 'No snapshot directories found in \'{}\''.format(snap_deep.path)
         return msg
     for snap_path in snap_paths:
         snap(snap_path.path, readonly=readonly)
@@ -418,7 +418,7 @@ def show_snaps_deep(path):
     return '\n'.join(msg)
 
 
-def sendreceive(send_path, receive_path):
+def send_receive(send_path, receive_path):
     '''
     Send snapshots from one BTRFS PATH to another.
 
@@ -469,7 +469,7 @@ def sendreceive(send_path, receive_path):
     return msg
 
 
-def sendreceive_deep(send_path, receive_path):
+def send_receive_deep(send_path, receive_path):
     '''
     Send all snapshots in subdirectories of send_path to receive_path.
 
@@ -481,8 +481,8 @@ def sendreceive_deep(send_path, receive_path):
     Returns:
         * (str): results.
     '''
-    snapdeep = Path(send_path)
-    snappaths = snapdeep.snap_paths_list()
+    snap_deep = Path(send_path)
+    snappaths = snap_deep.snap_paths_list()
     snappaths = [snappath.path for snappath in snappaths]
     receive_path = Path(receive_path)
     receive_path = receive_path.path
@@ -496,7 +496,7 @@ def sendreceive_deep(send_path, receive_path):
 
     args = zip(snappaths, receive_paths)
     for send_path, receive_path in args:
-        msg.append(sendreceive(send_path, receive_path))
+        msg.append(send_receive(send_path, receive_path))
     return '\n'.join(msg)
 
 
@@ -524,7 +524,7 @@ def main():
             if keep is not None:
                 caller(unsnap, args.snap_path[0], keep=keep)
         if args.recursive:
-            caller(snapdeep, args.snap_path[0])
+            caller(snap_deep, args.snap_path[0])
             if not keep is None:
                 caller(unsnap_deep, args.snap_path[0], keep=keep)
 
@@ -536,10 +536,10 @@ def main():
 
     def run_send(args):
         if not args.recursive:
-            caller(sendreceive, args.send_path[0], args.receive_path[0])
+            caller(send_receive, args.send_path[0], args.receive_path[0])
 
         if args.recursive:
-            caller(sendreceive_deep, args.send_path[0], args.receive_path[0])
+            caller(send_receive_deep, args.send_path[0], args.receive_path[0])
 
     def run_delete(args):
         keep = 5

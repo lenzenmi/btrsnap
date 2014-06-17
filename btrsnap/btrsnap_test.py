@@ -457,7 +457,7 @@ class Test_functions_(unittest.TestCase):
         timestamp = today.isoformat()
         first = os.path.join(snap_dir, timestamp + '-0001')
 
-        btrsnap.snapdeep(test_dir, readonly=False)
+        btrsnap.snap_deep(test_dir, readonly=False)
         self.assertTrue(os.path.isdir(first))
 
         # cleanup
@@ -472,7 +472,7 @@ class Test_functions_(unittest.TestCase):
 
         os.unlink(os.path.join(snap_dir, 'target'))
 
-        btrsnap.snapdeep(test_dir, readonly=False)
+        btrsnap.snap_deep(test_dir, readonly=False)
         self.assertFalse(os.path.isdir(first))
 
     def test_show_snaps(self):

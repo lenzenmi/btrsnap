@@ -105,7 +105,7 @@ class Test_functions_(unittest.TestCase):
                              os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
             count += 1
 
-        btrsnap.sendreceive(send_path, receive_path)
+        btrsnap.send_receive(send_path, receive_path)
         pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
 
         r_snaps = [x for x in os.listdir(receive_path) if os.path.isdir(os.path.join(receive_path, x)) and re.search(pattern, x)]
@@ -129,7 +129,7 @@ class Test_functions_(unittest.TestCase):
             subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(second_send_path, '{}-000{}'.format(timestamp, count))])
             count += 1
 
-        btrsnap.sendreceive_deep(send_paths, receive_path)
+        btrsnap.send_receive_deep(send_paths, receive_path)
 
         pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
 
