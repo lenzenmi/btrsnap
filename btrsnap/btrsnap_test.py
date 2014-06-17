@@ -100,7 +100,7 @@ class Test_ReceivePath_Class(unittest.TestCase):
     def test_ReceivePath_list_normal(self):
         snap_dir = self.snap_dir
         timestamps = sorted(self.timestamps, reverse=True)
-        snap = btrsnap.ReceivePath(snap_dir)
+        snap = btrsnap.Path(snap_dir)
         self.assertEqual(timestamps, snap.snapshots())
 
 
@@ -294,7 +294,7 @@ class Test_ReceiveDeep_Class(unittest.TestCase):
             self.assertIn(receive_path, snap_dirs)
 
         for receive_path in receive_deep.receive_paths():
-            self.assertIsInstance(receive_path, btrsnap.ReceivePath,
+            self.assertIsInstance(receive_path, btrsnap.Path,
                                   'Did not receive a list of Receive Paths'
                                   )
 

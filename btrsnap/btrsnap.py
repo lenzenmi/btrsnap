@@ -60,19 +60,13 @@ class Path:
         else:
             raise PathError('{} is not a valid folder name'.format(path))
 
-
-class SnapshotsMixin:
-    '''
-    Mixin to display btrsnap snapshots in self.path
-    '''
-
     def snapshots(self):
         '''
-        List folders all folders in *self.path* whose name matches the
+        List all folders in *self.path* whose name matches the
         btrsnap timestamp format: yyyy-mm-dd-####.
 
         Returns:
-            * (list(str)): a list of directories inside self.path that
+            * list(str): a list of directories inside self.path that
               match the btrsnap timestamp YYYY-MM-DD-####
         '''
         pattern = re.compile(r'^\d{4}-\d{2}-\d{2}-\d{4}$')
@@ -118,7 +112,7 @@ class SnapDeep(Path):
 
 class ReceiveDeep(Path):
     '''
-    Generates a list of ReceivePath objects for each valid subdirectory of
+    Generates a list of Path objects for each valid subdirectory of
     path.
 
     Args:
@@ -134,7 +128,7 @@ class ReceiveDeep(Path):
     def receive_paths(self):
         '''
         Returns:
-            * (list(ReceivePath): a list of ReceivePath objects for each
+            * (list(Path): a list of Path objects for each
             subdirectory of self.path.
         '''
         receive_paths = []
@@ -143,14 +137,14 @@ class ReceiveDeep(Path):
                     if os.path.isdir(os.path.join(self.path, d))]
         for content in contents:
             try:
-                receive_paths.append(ReceivePath(os.path.join(
+                receive_paths.append(Path(os.path.join(
                     self.path, content)))
             except Exception:
                 pass
         return receive_paths
 
 
-class SnapPath(Path, SnapshotsMixin):
+class SnapPath(Path):
     '''
     Verifies that path exists, and that it contains exactly one symlink.
 
@@ -219,23 +213,6 @@ class SnapPath(Path, SnapshotsMixin):
                                 ' Something is probably wrong. Aborting!')
             counter += 1
         return timestamp
-
-
-class ReceivePath(SnapshotsMixin, Path):
-    '''
-    Verifies Path and lists Snapshots inside self.path
-
-    Args:
-        * Path (str): Path on filesystem
-
-    Attributes:
-        * path (str): absolute path
-        * Snapshots (list(str)): List of snapshots inside self.path
-
-    Raises:
-        * PathError:
-    '''
-    pass
 
 
 class Btrfs(Path):
@@ -359,7 +336,7 @@ def unsnap(path, keep=5):
     Returns:
         * msg (str): results
     '''
-    snappath = ReceivePath(path)
+    snappath = Path(path)
     btrfs = Btrfs(snappath.path)
     snapshots = snappath.snapshots()
 
@@ -431,7 +408,7 @@ def show_snaps(path):
     Returns:
         * msg (str): results
     '''
-    receive_path = ReceivePath(path)
+    receive_path = Path(path)
     snapshots = receive_path.snapshots()
     msg = []
     for snapshot in snapshots:
@@ -489,7 +466,7 @@ def sendreceive(send_path, receive_path):
         * (str): results
     '''
     send = SnapPath(send_path)
-    receive = ReceivePath(receive_path)
+    receive = Path(receive_path)
     send_btr = Btrfs(send.path)
     receive_btr = Btrfs(receive.path)
 
