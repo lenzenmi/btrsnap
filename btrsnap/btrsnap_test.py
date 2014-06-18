@@ -15,6 +15,8 @@ import shutil
 import datetime
 import subprocess
 
+from dateutil.relativedelta import relativedelta
+
 import btrsnap
 
 
@@ -141,7 +143,7 @@ class Test_SnapPath_Class(unittest.TestCase):
         snap_dir = self.snap_dir
         timestamps = sorted(self.timestamps, reverse=True)
         file_with_timestamp_name = os.path.join(snap_dir, '2013-01-01-0001')
-        open(file_with_timestamp_name, 'w').close
+        open(file_with_timestamp_name, 'w').close()
 
         snap = btrsnap.SnapPath(snap_dir)
         self.assertEqual(timestamps, snap.snapshots())
@@ -247,11 +249,11 @@ class Test_SnapDeep_Class(unittest.TestCase):
         test_dir = self.test_dir
         snap_dirs = self.snap_dirs
         snap_deep = btrsnap.Path(test_dir)
-        snap_paths_list = snap_deep.snap_paths_list()
-        snap_paths_list = [snap_path.path for snap_path in snap_paths_list]
+        sub_snap_paths_list = snap_deep.sub_snap_paths_list()
+        sub_snap_paths_list = [snap_path.path for snap_path in sub_snap_paths_list]
 
-        self.assertEqual(len(snap_dirs), len(snap_paths_list))
-        for snap_path in snap_paths_list:
+        self.assertEqual(len(snap_dirs), len(sub_snap_paths_list))
+        for snap_path in sub_snap_paths_list:
             self.assertIn(snap_path, snap_dirs)
 
 
@@ -286,14 +288,14 @@ class Test_ReceiveDeep_Class(unittest.TestCase):
         test_dir = self.test_dir
         snap_dirs = self.snap_dirs
         receive_deep = btrsnap.Path(test_dir)
-        paths_list = receive_deep.paths_list()
-        paths_list = [receive_path.path for receive_path in paths_list]
+        sub_paths_list = receive_deep.sub_paths_list()
+        sub_paths_list = [receive_path.path for receive_path in sub_paths_list]
 
-        self.assertEqual(len(snap_dirs), len(paths_list))
-        for receive_path in paths_list:
+        self.assertEqual(len(snap_dirs), len(sub_paths_list))
+        for receive_path in sub_paths_list:
             self.assertIn(receive_path, snap_dirs)
 
-        for receive_path in receive_deep.paths_list():
+        for receive_path in receive_deep.sub_paths_list():
             self.assertIsInstance(receive_path, btrsnap.Path,
                                   'Did not receive a list of Receive Paths'
                                   )
@@ -409,7 +411,7 @@ class Test_functions_(unittest.TestCase):
         subprocess.call(['btrfs', 'subvolume', 'delete', first])
         subprocess.call(['btrfs', 'subvolume', 'delete', second])
 
-    def test_unsnap(self):
+    def test_unsnap_keep(self):
         snap_dir = self.snap_dir
         link_dir = self.link_dir
         today = datetime.date.today()
@@ -449,6 +451,26 @@ class Test_functions_(unittest.TestCase):
 
         # cleanup
         btrsnap.unsnap(snap_dir, keep=0)
+
+    def test_unsnap_date(self):
+        snap_dir = self.snap_dir
+        link_dir = self.link_dir
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+        timestamp_today = today.isoformat()
+        timestamp_yesterday = yesterday.isoformat()
+        first = os.path.join(snap_dir, timestamp_today + '-0001')
+        second = os.path.join(snap_dir, timestamp_yesterday + '-0002')
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, first])
+        subprocess.call(['btrfs', 'subvolume', 'snap', link_dir, second])
+
+        btrsnap.unsnap(snap_dir, date=relativedelta(days=1))
+        self.assertTrue(os.path.isdir(first))
+        self.assertFalse(os.path.isdir(second))
+
+        btrsnap.unsnap(snap_dir, date=relativedelta(days=0))
+        self.assertFalse(os.path.isdir(first))
+        self.assertFalse(os.path.isdir(second))
 
     def test_snapdeep(self):
         test_dir = self.test_dir

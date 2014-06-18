@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+#
+# Script to launch the btrsnap module
+#
+#
+import btrsnap.btrsnap
+
+btrsnap.btrsnap.main()

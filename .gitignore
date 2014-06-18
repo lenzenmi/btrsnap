@@ -1,0 +1,6 @@
+btrsnap.egg-info
+*~
+build
+.project
+.pydevproject
+

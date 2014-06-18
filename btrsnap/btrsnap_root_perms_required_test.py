@@ -18,6 +18,8 @@ import subprocess
 import re
 import glob
 
+from dateutil.relativedelta import relativedelta
+
 import btrsnap
 
 
@@ -152,40 +154,72 @@ class Test_functions_(unittest.TestCase):
         for sub in s_snaps:
             self.assertIn(sub, r_snaps, '{} snapshot was not received'.format(sub))
 
-    def test_unsnap_deep(self):
-        send_paths = self.parent_snap_dir
-        send_path = self.snap_dir1
+    def test_unsnap_deep_keep(self):
+        parent_path = self.parent_snap_dir
+        first_send_path = self.snap_dir1
         second_send_path = self.snap_dir2
-        receive_path = self.receive_dir
         link_path = self.link_dir
         timestamp = self.timestamp
 
         # create some snapshots
         count = 1
         while count <= 5:
-            subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(send_path, '{}-000{}'.format(timestamp, count))])
+            subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(first_send_path, '{}-000{}'.format(timestamp, count))])
             subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(second_send_path, '{}-000{}'.format(timestamp, count))])
             count += 1
 
         def unsnap_deep_tester(keep):
 
-            btrsnap.unsnap_deep(send_paths, keep=keep)
+            btrsnap.unsnap_deep(parent_path, keep=keep)
 
             pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
 
-            walker = os.walk(send_paths)
-            walker = [walk[1] for walk in walker]
+            walker = os.walk(parent_path)
+            folders = [walk[1] for walk in walker]
 
             snaps = []
-            for subs in walker:  # Flatten List of Lists
-                snaps.extend(subs)
+            for folder in folders:  # Flatten List of Lists
+                snaps.extend(folder)
             snaps = [snap for snap in snaps if re.search(pattern, snap)]
-
             self.assertEqual(len(snaps), 2 * keep,
                              "Wrong number of snapshots survived")
 
         for keep in range(5, -1, -1):
             unsnap_deep_tester(keep)
+
+    def test_unsnap_deep_date(self):
+        parent_path = self.parent_snap_dir
+        first_send_path = self.snap_dir1
+        second_send_path = self.snap_dir2
+        link_path = self.link_dir
+        timestamp_today = self.timestamp
+        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        timestamp_yesterday = yesterday.isoformat()
+
+        # create some snapshots
+        count = 1
+        while count <= 5:
+            subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(first_send_path, '{}-000{}'.format(timestamp_today, count))])
+            subprocess.call(['btrfs', 'subvolume', 'snap', '-r', link_path, os.path.join(second_send_path, '{}-000{}'.format(timestamp_yesterday, count))])
+            count += 1
+
+        def assert_snap_count(expected):
+            pattern = re.compile('\d{4}-\d{2}-\d{2}-\d{4}')
+            walker = os.walk(parent_path)
+            folders = [walk[1] for walk in walker]
+            snaps = []
+            for folder in folders:  # Flatten List of Lists
+                snaps.extend(folder)
+            snaps = [snap for snap in snaps if re.search(pattern, snap)]
+            self.assertEqual(len(snaps), expected,
+                             "Wrong number of snapshots survived")
+        # delete yesterday's
+        btrsnap.unsnap_deep(parent_path, keep=None, date=relativedelta(days=1))
+        assert_snap_count(5)
+
+        # delete today's
+        btrsnap.unsnap_deep(parent_path, keep=None, date=relativedelta(days=0))
+        assert_snap_count(0)
 
 
 if __name__ == "__main__":

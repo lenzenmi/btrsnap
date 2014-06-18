@@ -24,23 +24,13 @@ btrsnap Classes
 .. autoclass:: btrsnap.Path
    :members:
 
-.. autoclass:: btrsnap.SnapshotsMixin
-   :members:
-
 .. autoclass:: btrsnap.SnapPath
-   :members:
-
-.. autoclass:: btrsnap.SnapDeep
-   :members:
-
-.. autoclass:: btrsnap.ReceivePath
-   :members:
-
-.. autoclass:: btrsnap.ReceiveDeep
    :members:
 
 btrsnap Exceptions
 ==================
+
+.. autoexception:: btrsnap.BtrsnapError
 
 .. autoexception:: btrsnap.PathError
 

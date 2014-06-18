@@ -1,17 +1,14 @@
-from setuptools import setup, find_packages
+from distutils.core import setup
+
 setup(
     name = "btrsnap",
     version = "2.0.0",
-    packages = find_packages(exclude=["tests*"]),
-    entry_points = {
-        'console_scripts': [
-            'btrsnap = btrsnap.btrsnap:main',
-        ]
-    },
-
+    packages = ['btrsnap'],
+    scripts = ['scripts/btrsnap'],
+    
     # metadata for upload to PyPI
     author = "Mike Lenzen",
-    author_email = "lenzenmi@example.com",
+    author_email = "lenzenmi@gmail.com",
     description = "A program to simplify working with BTRFS snapshots.",
     license = "GPL3",
     keywords = "btrfs",

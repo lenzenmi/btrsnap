@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 '''
 Writen for python 3.x
 btrsnap simplifies working with btrfs snapshots.
@@ -8,6 +8,15 @@ import os
 import re
 import datetime
 import subprocess
+import sys
+
+try:
+    from dateutil.relativedelta import relativedelta
+except ImportError:
+    print('You are missing some required packages!\n'
+          'try:'
+          '\n\tpip install python-dateutil')
+    sys.exit(1)
 
 
 class BtrsnapError(Exception):
@@ -77,23 +86,23 @@ class Path:
         contents.sort(reverse=True)
         return contents
 
-    def snap_paths_list(self):
+    def sub_snap_paths_list(self):
         '''
         Returns:
             * list(SnapPath): a list of SnapPath objects for each subdirectory
             inside of self.path.
         '''
-        return self._list_objects(SnapPath)
+        return self._list_of_objects(SnapPath)
 
-    def paths_list(self):
+    def sub_paths_list(self):
         '''
         Returns:
             * list(Path): a list of Path objects for each subdirectory
             inside of self.path.
         '''
-        return self._list_objects(Path)
+        return self._list_of_objects(Path)
 
-    def _list_objects(self, obj):
+    def _list_of_objects(self, obj):
         objects = []
         contents = os.listdir(self.path)
         contents = [directory for directory in contents
@@ -156,20 +165,21 @@ class SnapPath(Path):
         snapshots = self.snapshots()
         if snapshots:
             last_snapshot = snapshots[0]
-            less_than_last_snapshot = True
+            is_older_than_last_snapshot = True
         else:
             last_snapshot = None
-            less_than_last_snapshot = False
+            is_older_than_last_snapshot = False
         timestamp = None
 
-        while (timestamp is None or timestamp in snapshots
-               or less_than_last_snapshot is True):
+        while ((timestamp is None)
+               or (timestamp in snapshots)
+               or (is_older_than_last_snapshot is True)):
             timestamp = '{}-{:04d}'.format(today.isoformat(), counter)
-            if less_than_last_snapshot is True:
+            if is_older_than_last_snapshot is True:
                 if timestamp <= last_snapshot:
-                    less_than_last_snapshot = True
+                    is_older_than_last_snapshot = True
                 else:
-                    less_than_last_snapshot = False
+                    is_older_than_last_snapshot = False
 
             if counter > 9999:
                 raise Exception('More than 9999 snapshots created today.'
@@ -270,8 +280,10 @@ class Btrfs(Path):
         output = p2.communicate()
         p1.stdout.close()
         if p2.returncode:
-            raise BtrfsError('BTRFS Failed send/recieve.'
-                             ' Do you have root permissions?',
+            raise BtrfsError('BTRFS Failed send/receive.'
+                             ' Do you have root permissions?'
+                             ' Are you receiving to the top level'
+                             ' of your BTRFS filesystem?',
                              output[0], output[1])
 
 
@@ -289,13 +301,17 @@ def snap(path, readonly=True):
     btrfs.snap(snappath.target, snappath.timestamp(), readonly=readonly)
 
 
-def unsnap(path, keep=5):
+def unsnap(path, keep=None, date=None):
     '''
-    Delete all but most recent KEEP(default 5) snapshots inside PATH
+    Delete all but most recent KEEP snapshots inside PATH
+    OR
+    Delete all snapshots created on or before DATE
 
     Args:
         * path (str): path on filesystem
         * keep (int): number of snapshots to keep
+        * date (dateutil.relativedelta.relativedelta): set to some date
+            in the past
 
     Returns:
         * msg (str): results
@@ -303,42 +319,75 @@ def unsnap(path, keep=5):
     snappath = Path(path)
     btrfs = Btrfs(snappath.path)
     snapshots = snappath.snapshots()
+    msg = ""
+    if keep is not None:
+        if not keep >= 0 or not isinstance(keep, int):
+            raise Exception('keep must be a positive integer')
+        if len(snapshots) > keep:
+            snaps_to_delete = snapshots[keep:]
+            for snapshot in snaps_to_delete:
+                btrfs.unsnap(snapshot)
+            msg = 'Deleted {} snapshot(s) from "{}". {} kept'.format(
+                len(snaps_to_delete), snappath.path, keep)
+        else:
+            msg = ('There are {} or less snapshots in "{}" ...'
+                   ' not deleting any'.format(keep, snappath.path)
+                   )
+    if date is not None:
+        today = datetime.date.today()
+        delta_today = today - date
 
-    if not keep >= 0 or not isinstance(keep, int):
-        raise Exception('keep must be a positive integer')
-    if len(snapshots) > keep:
-        snaps_to_delete = snapshots[keep:]
-        for snapshot in snaps_to_delete:
-            btrfs.unsnap(snapshot)
-        msg = 'Deleted {} snapshot(s) from "{}". {} kept'.format(
-            len(snaps_to_delete), snappath.path, keep)
-    else:
-        msg = ('There are {} or less snapshot(s) in "{}" ...'
-               ' not deleting any'.format(keep, snappath.path))
+        snapshots.sort()
+        snapshots_deleted = 0
+        while snapshots:
+            snap = snapshots.pop()
+            snap_date = snap.split('-')
+            year, month, day = snap_date[:-1]
+            snap_datetime_date = relativedelta(year=int(year),
+                                               month=int(month),
+                                               day=int(day)
+                                               )
+            delta_snap = today - snap_datetime_date
+            if delta_today >= delta_snap:
+                btrfs.unsnap(snap)
+                snapshots_deleted += 1
+            msg = ('Deleted {} snapshot(s) from "{}"'
+                   '\n\t created on or before {}'
+                   .format(snapshots_deleted,
+                           snappath.path,
+                           delta_today.isoformat()
+                           )
+                   )
+        if not msg:
+            msg = ('There are no snapshot(s) as old or older than "{}"'
+                   ' in "{}" ... not deleting any'
+                   .format(delta_today.isoformat(), snappath.path))
+
     return msg
 
 
-def unsnap_deep(path, keep=5):
+def unsnap_deep(path, keep=None, date=None):
     '''
-    Delete all but KEEP (default 5) snapshots from each directory
+    Delete all but KEEP snapshots from each directory
     inside of path
 
     Args:
         * path (str): path on filesystem
         * keep (int): number of snapshots to keep
+        * date (dateutil.relativedelta.relativedelta): set to some date
+            in the past
 
     Returns:
         * msg (str): results
     '''
     msg = []
-    receive_deep = Path(path)
-    receive_paths = receive_deep.paths_list()
-    receive_paths = [path.path for path in receive_paths]
-    if len(receive_paths) == 0:
-        msg = 'No subdirectories found in \'{}\''.format(receive_deep.path)
+    parent_path = Path(path)
+    path_objects = parent_path.sub_paths_list()
+    if len(path_objects) == 0:
+        msg = 'No subdirectories found in \'{}\''.format(parent_path.path)
         return msg
-    for path in receive_paths:
-        msg.append(unsnap(path, keep))
+    for path in path_objects:
+        msg.append(unsnap(path.path, keep=keep, date=date))
     return '\n'.join(msg)
 
 
@@ -354,7 +403,7 @@ def snap_deep(path, readonly=True):
         * msg (str): results
     '''
     snap_deep = Path(path)
-    snap_paths = snap_deep.snap_paths_list()
+    snap_paths = snap_deep.sub_snap_paths_list()
     if len(snap_paths) == 0:
         msg = 'No snapshot directories found in \'{}\''.format(snap_deep.path)
         return msg
@@ -372,13 +421,13 @@ def show_snaps(path):
     Returns:
         * msg (str): results
     '''
-    receive_path = Path(path)
-    snapshots = receive_path.snapshots()
+    path = Path(path)
+    snapshots = path.snapshots()
     msg = []
     for snapshot in snapshots:
         msg.append(snapshot)
     msg.append('\n"{}" contains {} snapshot(s)'.format(
-        receive_path.path, len(snapshots)))
+        path.path, len(snapshots)))
     return '\n'.join(msg)
 
 
@@ -395,9 +444,9 @@ def show_snaps_deep(path):
     msg = []
     overall_snapshot_count = 0
     overall_path_count = 0
-    receive_deep = Path(path)
-    receive_paths = receive_deep.paths_list()
-    for p in receive_paths:
+    parent_path = Path(path)
+    sub_paths_list = parent_path.sub_paths_list()
+    for p in sub_paths_list:
         snapshots = p.snapshots()
         msg.append('\n\'{}\'/'.format(p.path))
         if snapshots:
@@ -446,14 +495,13 @@ def send_receive(send_path, receive_path):
     number_sent = len(diff)
 
     if diff:
-        if union and union[-1] < diff[0]:
+        if (union) and (union[-1] < diff[0]):
             parent, snapshot = union[-1], diff[0]
-            p1 = send_btr.send(snapshot, parent)
-            receive_btr.receive(p1)
         else:
             parent, snapshot = None, diff[0]
-            p1 = send_btr.send(snapshot, parent)
-            receive_btr.receive(p1)
+
+        p1 = send_btr.send(snapshot, parent)
+        receive_btr.receive(p1)
         while diff:
             if len(diff) >= 2:
                 parent, snapshot = diff.pop(0), diff[0]
@@ -482,7 +530,7 @@ def send_receive_deep(send_path, receive_path):
         * (str): results.
     '''
     snap_deep = Path(send_path)
-    snappaths = snap_deep.snap_paths_list()
+    snappaths = snap_deep.sub_snap_paths_list()
     snappaths = [snappath.path for snappath in snappaths]
     receive_path = Path(receive_path)
     receive_path = receive_path.path
@@ -506,6 +554,8 @@ def main():
     '''
 
     import argparse
+
+    from . import argparse_types
 
     def caller(func, *args, **kargs):
         try:
@@ -542,13 +592,16 @@ def main():
             caller(send_receive_deep, args.send_path[0], args.receive_path[0])
 
     def run_delete(args):
-        keep = 5
+        keep = None
+        date = None
         if args.keep:
             keep = args.keep[0]
+        if args.date:
+            date = args.date[0]
         if args.recursive:
-            caller(unsnap_deep, args.snap_path[0], keep=keep)
+            caller(unsnap_deep, args.snap_path[0], keep=keep, date=date)
         else:
-            caller(unsnap, args.snap_path[0], keep=keep)
+            caller(unsnap, args.snap_path[0], keep=keep, date=date)
 
     def no_subparser(args):
         parser.parse_args('--help')
@@ -646,22 +699,37 @@ def main():
                                              ' (Default, KEEP=5)',
                                              help='Delete snapshots'
                                              )
-    subparser_delete.add_argument('-k', '--keep',
-                                  nargs=1,
-                                  type=int,
-                                  metavar='N',
-                                  help='keep N snapshots when deleting.'
-                                  )
     subparser_delete.add_argument('-r', '--recursive',
                                   action='store_true',
-                                  help='Instead delete all but KEEP snapshots'
+                                  help='knstead delete all but KEEP snapshots'
                                   ' from each subdirectory')
     subparser_delete.add_argument('snap_path',
                                   nargs=1,
                                   metavar='PATH',
-                                  help='A directory on a BTRFS filesystem'
+                                  help='a directory on a BTRFS filesystem'
                                   ' that contains snapshots created by'
-                                  ' btrsnap.'
+                                  ' btrsnap'
+                                  )
+    group = subparser_delete.add_argument_group('Mutually Exclusive',
+                                                '(Required) - Choose 1')
+    mutually_exclusive = group.add_mutually_exclusive_group()
+    mutually_exclusive.add_argument('-k', '--keep',
+                                  nargs=1,
+                                  type=int,
+                                  metavar='N',
+                                  help='keep N snapshots when deleting',
+                                  )
+    mutually_exclusive.add_argument('-d', '--date',
+                                  nargs=1,
+                                  type=argparse_types.date_parser,
+                                  metavar='YYYY-MM-DD or ?y?m?d?w',
+                                  help='delete all snapshots created on or'
+                                  ' before the entered date. You may enter '
+                                  ' dates as ISO format or use the'
+                                  ' alternate syntax ?y?m?d?w where N can be'
+                                  ' any positive intager and indicates the'
+                                  ' number of years, months, days, and weeks'
+                                  ' respectively.',
                                   )
     subparser_delete.set_defaults(func=run_delete)
 
@@ -693,6 +761,12 @@ def main():
     subparser_send.set_defaults(func=run_send)
 
     args = parser.parse_args()
+
+    # make sure that one of the mutually_exclusive arguments is supplied
+    if hasattr(args, 'func') and (args.func is run_delete):
+        if (not args.date) and (not args.keep):
+            parser.error('you must supply either --keep or --date')
+
     try:
         args.func(args)
     except AttributeError:
