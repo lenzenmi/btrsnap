@@ -567,16 +567,19 @@ def main():
 
     def run_snap(args):
         keep = None
+        date = None
         if (args.keep):
             keep = args.keep[0]
+        if (args.date):
+            date = args.date[0]
         if not args.recursive:
             caller(snap, args.snap_path[0])
-            if keep is not None:
-                caller(unsnap, args.snap_path[0], keep=keep)
+            if (keep is not None) or (date is not None):
+                caller(unsnap, args.snap_path[0], keep=keep, date=date)
         if args.recursive:
             caller(snap_deep, args.snap_path[0])
-            if not keep is None:
-                caller(unsnap_deep, args.snap_path[0], keep=keep)
+            if (keep is not None) or (date is not None):
+                caller(unsnap_deep, args.snap_path[0], keep=keep, date=date)
 
     def run_list(args):
         if not args.recursive:
@@ -604,7 +607,7 @@ def main():
             caller(unsnap, args.snap_path[0], keep=keep, date=date)
 
     def no_subparser(args):
-        parser.parse_args('--help')
+        parser.parse_args([''])
 
     parser = argparse.ArgumentParser(
         prog='btrsnap',
@@ -660,19 +663,35 @@ def main():
                                 help='Instead, create a snapshot inside of'
                                 ' each directory located inside of PATH'
                                 )
-    subparser_snap.add_argument('-k', '--keep',
-                                nargs=1,
-                                type=int,
-                                metavar='N',
-                                help='After creating, delete all but N'
-                                ' snapshots'
-                                )
     subparser_snap.add_argument('snap_path',
                                 nargs=1,
                                 metavar='PATH',
                                 help='A directory on a BTRFS file system with'
                                 ' a symlink pointing to a BTRFS subvolume'
                                 )
+    group_snap = subparser_snap.add_argument_group('Mutually Exclusive',
+                                                   '(Optional) - Choose 1')
+    mutually_exclusive_snap = group_snap.add_mutually_exclusive_group()
+    mutually_exclusive_snap.add_argument('-k', '--keep',
+                                         nargs=1,
+                                         type=int,
+                                         metavar='N',
+                                         help='After creating, delete all'
+                                         ' but N snapshots'
+                                         )
+    mutually_exclusive_snap.add_argument('-d', '--date',
+                                         nargs=1,
+                                         type=argparse_types.date_parser,
+                                         metavar='YYYY-MM-DD or ?y?m?d?w',
+                                         help='After creating, delete all'
+                                         ' snapshots created on or before the'
+                                         ' entered date. You may enter dates'
+                                         ' as ISO format or use the alternate'
+                                         ' syntax ?y?m?d?w where N can be'
+                                         ' any positive intager and indicates'
+                                         ' the number of years, months, days,'
+                                         ' and weeks respectively.',
+                                         )
     subparser_snap.set_defaults(func=run_snap)
 
     subparser_list = subparsers.add_parser('list',
