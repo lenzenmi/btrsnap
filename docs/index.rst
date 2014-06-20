@@ -3,43 +3,31 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. contents::
+This documentation is for developers looking to work on the btrsnap project.
 
-.. _btrsnap-functions:
+For user documentation, please see the README.RST file in the root of the project.
 
-btrsnap functions
-=================
+=====================
+btrsnap documentation
+=====================
 
-.. automodule:: btrsnap
-   :members: snap, snapdeep, unsnap, unsnap_deep, show_snaps, show_snaps_deep, sendreceive, sendreceive_deep
 
-btrsnap Classes
-===============
+Table of Contents
+~~~~~~~~~~~~~~~~~
+.. toctree::
+        
+    btrsnap
+    argparse_types
+       
+Modules
+~~~~~~~
 
-.. note:: These Clasess are used internally and are referenced by the toplevel :ref:`functions <btrsnap-functions>`.
+* :doc:`btrsnap`
+* :doc:`argparse_types`
 
-.. autoclass:: btrsnap.Btrfs
-   :members:
-
-.. autoclass:: btrsnap.Path
-   :members:
-
-.. autoclass:: btrsnap.SnapPath
-   :members:
-
-btrsnap Exceptions
-==================
-
-.. autoexception:: btrsnap.BtrsnapError
-
-.. autoexception:: btrsnap.PathError
-
-.. autoexception:: btrsnap.TargetError
-
-.. autoexception:: btrsnap.BtrfsError
 
 Indices and tables
-==================
+~~~~~~~~~~~~~~~~~~
 
 * :ref:`genindex`
 * :ref:`modindex`
