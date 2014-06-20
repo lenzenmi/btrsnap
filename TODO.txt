@@ -1,4 +1,3 @@
-* Improve text displayed during single folder list
 * Allow removing snapshots until a certain level of free space is reached
 * Move all tests to a single root-perms-required test module
 * Add logging

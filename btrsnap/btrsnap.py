@@ -424,10 +424,15 @@ def show_snaps(path):
     path = Path(path)
     snapshots = path.snapshots()
     msg = []
+
+    msg.append('\n"{}"'.format(path.path))
     for snapshot in snapshots:
-        msg.append(snapshot)
-    msg.append('\n"{}" contains {} snapshot(s)'.format(
-        path.path, len(snapshots)))
+        msg.append('\t{}'.format(snapshot))
+    if snapshots:
+        newest = snapshots[0]
+        oldest = snapshots[-1]
+        msg.append('\n{} snapshot(s): Newest = {}, Oldest = {}\n'.format(
+            len(snapshots), newest[:-5], oldest[:-5]))
     return '\n'.join(msg)
 
 
@@ -460,9 +465,9 @@ def show_snaps_deep(path):
         else:
             msg.append('\t\tNo snapshots')
         overall_path_count += 1
-    msg.append('\n{:{s}^{n}}'.format(' Summary ', s='-', n=60))
-    msg.append('\'{}\' contains {} snapshots in {} subdirectories'.format(
-        path, overall_snapshot_count, overall_path_count))
+    msg.append('\n{:{s}^{n}}'.format(' Summary ', s='-', n=70))
+    msg.append('\'{}\' contains {} snapshots in {} subdirectories\n'
+               .format(path, overall_snapshot_count, overall_path_count))
 
     return '\n'.join(msg)
 
@@ -655,18 +660,18 @@ def main():
                                            ' be a snapshot of the BTRFS'
                                            ' subvolume pointed to by the'
                                            ' symbolic link in PATH.',
-                                           help='Creates new timestamped BTRFS'
+                                           help='creates new timestamped BTRFS'
                                            ' snapshot'
                                            )
     subparser_snap.add_argument('-r', '--recursive',
                                 action='store_true',
-                                help='Instead, create a snapshot inside of'
+                                help='instead, create a snapshot inside of'
                                 ' each directory located inside of PATH'
                                 )
     subparser_snap.add_argument('snap_path',
                                 nargs=1,
                                 metavar='PATH',
-                                help='A directory on a BTRFS file system with'
+                                help='a directory on a BTRFS file system with'
                                 ' a symlink pointing to a BTRFS subvolume'
                                 )
     group_snap = subparser_snap.add_argument_group('Mutually Exclusive',
@@ -676,51 +681,52 @@ def main():
                                          nargs=1,
                                          type=int,
                                          metavar='N',
-                                         help='After creating, delete all'
+                                         help='after creating, delete all'
                                          ' but N snapshots'
                                          )
     mutually_exclusive_snap.add_argument('-d', '--date',
                                          nargs=1,
                                          type=argparse_types.date_parser,
                                          metavar='YYYY-MM-DD or ?y?m?d?w',
-                                         help='After creating, delete all'
+                                         help='after creating, delete all'
                                          ' snapshots created on or before the'
                                          ' entered date. You may enter dates'
                                          ' as ISO format or use the alternate'
                                          ' syntax ?y?m?d?w where N can be'
                                          ' any positive intager and indicates'
                                          ' the number of years, months, days,'
-                                         ' and weeks respectively.',
+                                         ' and weeks respectively',
                                          )
     subparser_snap.set_defaults(func=run_snap)
 
     subparser_list = subparsers.add_parser('list',
                                            description='Show timestamped'
-                                           ' snapshots in PATH',
-                                           help='Show timestamped snapshots'
+                                           ' snapshots in PATH.',
+                                           help='show timestamped snapshots'
                                            )
     subparser_list.add_argument('snap_path',
                                 nargs=1,
                                 metavar='PATH',
-                                help='A directory on a BTRFS filesystem'
+                                help='a directory on a BTRFS filesystem'
                                 ' that contains snapshots created by btrsnap.'
                                 )
     subparser_list.add_argument('-r', '--recursive',
                                 action='store_true',
-                                help='Instead, show summary statistics for all'
-                                ' subdirectories in PATH.'
+                                help='instead, show summary statistics for all'
+                                ' subdirectories in PATH'
                                 )
     subparser_list.set_defaults(func=run_list)
 
     subparser_delete = subparsers.add_parser('delete',
                                              description='Delete all but KEEP'
-                                             ' snapshots from PATH.'
-                                             ' (Default, KEEP=5)',
-                                             help='Delete snapshots'
+                                             ' snapshots from PATH, or delete'
+                                             ' all snapshots created on or'
+                                             ' or before DATE',
+                                             help='delete snapshots'
                                              )
     subparser_delete.add_argument('-r', '--recursive',
                                   action='store_true',
-                                  help='knstead delete all but KEEP snapshots'
+                                  help='instead delete all but KEEP snapshots'
                                   ' from each subdirectory')
     subparser_delete.add_argument('snap_path',
                                   nargs=1,
@@ -748,7 +754,7 @@ def main():
                                   ' alternate syntax ?y?m?d?w where N can be'
                                   ' any positive intager and indicates the'
                                   ' number of years, months, days, and weeks'
-                                  ' respectively.',
+                                  ' respectively',
                                   )
     subparser_delete.set_defaults(func=run_delete)
 
@@ -756,27 +762,27 @@ def main():
                                            description='Send all snapshots'
                                            ' from SendPATH to ReceivePATH if'
                                            ' not present.',
-                                           help='Use BTRFS send/receive to'
+                                           help='uses BTRFS send/receive to'
                                            ' smartly send snapshots from one'
-                                           ' BTRFS filesystem to another.'
+                                           ' BTRFS filesystem to another'
                                            )
     subparser_send.add_argument('-r', '--recursive',
                                 action='store_true',
-                                help='Instead, send snapshots from each sub'
+                                help='instead, send snapshots from each sub'
                                 ' directory of SendPATH to a subdirectory of'
                                 ' the same name in ReceivePATH. Subdirectories'
-                                ' are automatically created if needed.'
+                                ' are automatically created if needed'
                                 )
     subparser_send.add_argument('send_path',
                                 nargs=1,
                                 metavar='SendPATH',
-                                help='A directory on a BTRFS filesystem that'
-                                ' contains snapshots created by btrsnap.')
+                                help='a directory on a BTRFS filesystem that'
+                                ' contains snapshots created by btrsnap')
     subparser_send.add_argument('receive_path',
                                 nargs=1,
                                 metavar='ReceivePATH',
-                                help='A directory on a BTRFS filesystem that'
-                                ' will receive snapshots.')
+                                help='a directory on a BTRFS filesystem that'
+                                ' will receive snapshots')
     subparser_send.set_defaults(func=run_send)
 
     args = parser.parse_args()

@@ -14,6 +14,9 @@ v2.0.0
         the ``--delete`` option was removed from the *snap* sub-command. ``--keep`` now implies delete.
         
 * Improved help/error messages
+* Improved display for *list* subcommand
+* Added --date option to the *delete* subcommand. You can now delete all snapshots older than a specific date
+* Added --date option to the *snap* subcommand. You can now delete all snapshots older than a specific date when creating new snapshots
 * Suppressed btrfs output when deleting -- became too noisy
 * Code refactoring for easier code maintenance
 
