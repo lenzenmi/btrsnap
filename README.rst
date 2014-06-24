@@ -65,7 +65,7 @@ Example
         `-- webserver
             `-- target -> /srv/http
         
-In this example, photos and webserver are both valid SNAPPATHS and inside a parent folder. 
+In this example, ``photos`` and ``webserver`` are both valid SNAPPATHS and inside a parent folder. 
 
 .. note::
         Symbolic links can be created with the 'ln' command:
@@ -103,7 +103,7 @@ snap
       -d YYYY-MM-DD or ?y?m?d?w, --date YYYY-MM-DD or ?y?m?d?w
                             after creating, delete all snapshots created on or
                             before the entered date. You may enter dates as ISO
-                            format or use the alternate syntax ?y?m?d?w where N
+                            format or use the alternate syntax ?y?m?d?w where ?
                             can be any positive intager and indicates the number
                             of years, months, days, and weeks respectively
                             
@@ -153,7 +153,7 @@ delete
       -d YYYY-MM-DD or ?y?m?d?w, --date YYYY-MM-DD or ?y?m?d?w
                             delete all snapshots created on or before the entered
                             date. You may enter dates as ISO format or use the
-                            alternate syntax ?y?m?d?w where N can be any positive
+                            alternate syntax ?y?m?d?w where ? can be any positive
                             intager and indicates the number of years, months,
                             days, and weeks respectively
 

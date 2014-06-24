@@ -647,7 +647,8 @@ def main():
         example::
 
             ln -s /srv/music /snapshots/music/target
-    ...         ''')
+    ...'''
+    )
     parser.add_argument('--version', action='version',
                         version='%(prog)s 2.0.0'
                         )
@@ -692,7 +693,7 @@ def main():
                                          ' snapshots created on or before the'
                                          ' entered date. You may enter dates'
                                          ' as ISO format or use the alternate'
-                                         ' syntax ?y?m?d?w where N can be'
+                                         ' syntax ?y?m?d?w where ? can be'
                                          ' any positive intager and indicates'
                                          ' the number of years, months, days,'
                                          ' and weeks respectively',
@@ -751,7 +752,7 @@ def main():
                                   help='delete all snapshots created on or'
                                   ' before the entered date. You may enter '
                                   ' dates as ISO format or use the'
-                                  ' alternate syntax ?y?m?d?w where N can be'
+                                  ' alternate syntax ?y?m?d?w where ? can be'
                                   ' any positive intager and indicates the'
                                   ' number of years, months, days, and weeks'
                                   ' respectively',
